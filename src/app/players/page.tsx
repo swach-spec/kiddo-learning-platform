@@ -1,34 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import {
-  defaultPlayers,
-  Player,
-} from "@/lib/kiddo";
+import { Player } from "@/lib/kiddo";
+import { getPlayers, setCurrentPlayer } from "@/lib/player";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 
 export default function PlayersPage() {
-  const [players, setPlayers] = useState<Player[]>(defaultPlayers);
+  const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("kiddo-players");
-
-    if (saved) {
-      setPlayers(JSON.parse(saved));
-    } else {
-      localStorage.setItem(
-        "kiddo-players",
-        JSON.stringify(defaultPlayers)
-      );
-    }
+    setPlayers(getPlayers());
   }, []);
 
   function selectPlayer(player: Player) {
-    localStorage.setItem(
-      "kiddo-current-player",
-      JSON.stringify(player)
-    );
-
+    setCurrentPlayer(player);
     window.location.href = "/";
   }
 
@@ -62,7 +47,7 @@ export default function PlayersPage() {
             </p>
 
             <h2 className="mt-2 text-4xl font-black sm:text-5xl">
-              Who's playing?
+              Who&apos;s playing?
             </h2>
 
             <p className="mt-3 text-slate-400">
@@ -80,8 +65,8 @@ export default function PlayersPage() {
                 className="group rounded-[2rem] border border-white/10 bg-white/5 p-6 text-center transition duration-200 hover:-translate-y-2 hover:border-emerald-400/50 hover:bg-white/10"
               >
 
-                <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-[2rem] bg-gradient-to-br from-cyan-400 to-blue-600 text-6xl shadow-2xl transition group-hover:scale-110">
-                  {player.avatar}
+                <div className="mx-auto transition group-hover:scale-110">
+                  <PlayerAvatar avatar={player.avatar} size="lg" />
                 </div>
 
                 <h3 className="mt-5 text-2xl font-black">

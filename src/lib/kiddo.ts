@@ -8,6 +8,8 @@ export type Player = {
   streak: number;
   storiesCompleted: number;
   badges: number;
+  /** Ids of stories this player has finished (used to derive Story Forest progress and unlocks). */
+  completedStoryIds: string[];
 };
 
 export const defaultPlayers: Player[] = [
@@ -21,6 +23,7 @@ export const defaultPlayers: Player[] = [
     streak: 7,
     storiesCompleted: 18,
     badges: 6,
+    completedStoryIds: [],
   },
   {
     id: "jane",
@@ -32,6 +35,7 @@ export const defaultPlayers: Player[] = [
     streak: 5,
     storiesCompleted: 11,
     badges: 4,
+    completedStoryIds: [],
   },
   {
     id: "trevor",
@@ -43,9 +47,18 @@ export const defaultPlayers: Player[] = [
     streak: 3,
     storiesCompleted: 6,
     badges: 2,
+    completedStoryIds: [],
   },
 ];
 
+// NOTE (Phase 1.1): getLevelFromXP(1240) actually returns 5, not Sam's
+// stored level of 4 — this discrepancy exists in the original HEAD data
+// too (level was authored as a literal, not derived). Phase 1.1
+// deliberately leaves these seed values untouched rather than "fixing"
+// them, per the instruction not to alter existing learner state without
+// explicit approval. Level is treated as persisted state that this
+// formula recalculates prospectively when XP changes (see
+// lib/player.ts#awardXP) — never retroactively on read.
 export function getLevelFromXP(xp: number) {
   return Math.floor(xp / 300) + 1;
 }

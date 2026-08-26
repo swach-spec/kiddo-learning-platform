@@ -1,59 +1,36 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-
-const stories = [
-  {
-    id: 1,
-    title: "The Lost Kite",
-    description: "Help Tom discover where his favourite red kite has gone.",
-    icon: "🪁",
-    level: "Level 2",
-    time: "5 min",
-    xp: 100,
-    progress: 0,
-    unlocked: true,
-    gradient: "from-sky-400 to-blue-600",
-  },
-  {
-    id: 2,
-    title: "The Clever Tortoise",
-    description: "A clever tortoise discovers that patience can be powerful.",
-    icon: "🐢",
-    level: "Level 2",
-    time: "6 min",
-    xp: 120,
-    progress: 0,
-    unlocked: true,
-    gradient: "from-emerald-400 to-green-600",
-  },
-  {
-    id: 3,
-    title: "The Lion and the Mouse",
-    description: "Discover how even the smallest friend can make a big difference.",
-    icon: "🦁",
-    level: "Level 3",
-    time: "7 min",
-    xp: 150,
-    progress: 0,
-    unlocked: true,
-    gradient: "from-orange-400 to-amber-600",
-  },
-  {
-    id: 4,
-    title: "The Secret Garden",
-    description: "Something mysterious is waiting behind an old wooden gate.",
-    icon: "🌺",
-    level: "Level 4",
-    time: "8 min",
-    xp: 180,
-    progress: 0,
-    unlocked: false,
-    gradient: "from-pink-400 to-rose-600",
-  },
-];
+import { Player } from "@/lib/kiddo";
+import { getCurrentPlayer } from "@/lib/player";
+import { getAllStories } from "@/content";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { XPPill } from "@/components/XPPill";
+import { StoryCard } from "@/components/StoryCard";
 
 export default function StoryForest() {
+  const [player, setPlayer] = useState<Player | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const current = getCurrentPlayer();
+
+    if (!current) {
+      window.location.href = "/players";
+      return;
+    }
+
+    setPlayer(current);
+    setLoading(false);
+  }, []);
+
+  if (loading || !player) {
+    return null;
+  }
+
+  const stories = getAllStories();
+
   return (
     <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
       {/* Ambient background */}
@@ -87,14 +64,8 @@ export default function StoryForest() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2">
-              <p className="text-xs text-slate-500">YOUR XP</p>
-              <p className="font-black">⭐ 1,240</p>
-            </div>
-
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 text-xl">
-              🧑🏾‍🚀
-            </div>
+            <XPPill xp={player.xp} label="YOUR XP" />
+            <PlayerAvatar avatar={player.avatar} size="md" />
           </div>
         </header>
 
@@ -151,87 +122,18 @@ export default function StoryForest() {
             </div>
 
             <div className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-400 sm:block">
-              ⭐ 4 stories available
+              ⭐ {stories.length} stories available
             </div>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-
             {stories.map((story) => (
-              <div
+              <StoryCard
                 key={story.id}
-                className={`group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 transition ${
-                  story.unlocked
-                    ? "hover:-translate-y-2 hover:bg-white/10"
-                    : "opacity-50"
-                }`}
-              >
-
-                {/* Illustration */}
-                <div
-                  className={`relative flex h-44 items-center justify-center bg-gradient-to-br ${story.gradient}`}
-                >
-                  <div className="text-8xl transition duration-300 group-hover:scale-110">
-                    {story.icon}
-                  </div>
-
-                  {!story.unlocked && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                      <div className="text-center">
-                        <div className="text-4xl">🔒</div>
-                        <p className="mt-2 text-sm font-bold">
-                          Unlock at Level 5
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="absolute left-4 top-4 rounded-full bg-black/20 px-3 py-1 text-xs font-bold backdrop-blur">
-                    {story.level}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-5">
-
-                  <h3 className="text-xl font-black">
-                    {story.title}
-                  </h3>
-
-                  <p className="mt-2 min-h-[72px] text-sm leading-6 text-slate-400">
-                    {story.description}
-                  </p>
-
-                  <div className="mt-4 flex items-center justify-between text-xs">
-                    <span className="text-slate-500">
-                      ⏱ {story.time}
-                    </span>
-
-                    <span className="font-bold text-yellow-400">
-                      ⭐ +{story.xp} XP
-                    </span>
-                  </div>
-
-                  {story.unlocked ? (
-                    <Link
-                      href={`/story/${story.id}`}
-                      className="mt-5 block w-full rounded-2xl bg-white py-3 text-center font-black text-slate-900 transition hover:bg-yellow-300"
-                    >
-                      Start Story →
-                    </Link>
-                  ) : (
-                    <button
-                      disabled
-                      className="mt-5 w-full cursor-not-allowed rounded-2xl bg-white/10 py-3 font-bold text-slate-500"
-                    >
-                      🔒 Locked
-                    </button>
-                  )}
-
-                </div>
-              </div>
+                story={story}
+                unlocked={player.level >= story.unlocksAtLevel}
+              />
             ))}
-
           </div>
         </section>
 
@@ -244,7 +146,7 @@ export default function StoryForest() {
             </p>
 
             <p className="mt-2 text-4xl font-black">
-              18
+              {player.storiesCompleted}
             </p>
           </div>
 
@@ -254,7 +156,7 @@ export default function StoryForest() {
             </p>
 
             <p className="mt-2 text-4xl font-black">
-              7 🔥
+              {player.streak} 🔥
             </p>
           </div>
 
@@ -264,7 +166,7 @@ export default function StoryForest() {
             </p>
 
             <p className="mt-2 text-4xl font-black">
-              860 ⭐
+              {player.xp.toLocaleString()} ⭐
             </p>
           </div>
 

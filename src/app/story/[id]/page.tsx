@@ -1,94 +1,166 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-
-const story = {
-  title: "The Lost Kite",
-  level: "Level 2",
-  totalPages: 3,
-  pages: [
-    {
-      text: "Tom woke up early on Saturday morning. He looked outside and saw that the sky was bright and blue. It was a perfect day to fly his favourite red kite.",
-      illustration: "☀️🪁",
-    },
-    {
-      text: "Tom ran to the field behind his house. The wind was gentle at first, and his kite rose higher and higher. Tom smiled as he watched it dance in the sky.",
-      illustration: "🧒🏾🪁🌳",
-    },
-    {
-      text: "Suddenly, a strong wind blew across the field. The kite flew over the fence and disappeared behind some trees. Tom decided to follow it and see where it had landed.",
-      illustration: "💨🪁🌳",
-    },
-  ],
-};
-
-const questions = [
-  {
-    question: "What colour was Tom's kite?",
-    answers: ["Blue", "Green", "Red", "Yellow"],
-    correct: 2,
-    explanation: "The story tells us that Tom's favourite kite was red.",
-  },
-  {
-    question: "Where did Tom fly his kite?",
-    answers: [
-      "At school",
-      "In the field behind his house",
-      "At the beach",
-      "In the forest",
-    ],
-    correct: 1,
-    explanation: "Tom ran to the field behind his house.",
-  },
-  {
-    question: "Why did the kite fly over the fence?",
-    answers: [
-      "Tom pulled it",
-      "A bird carried it",
-      "The kite broke",
-      "A strong wind blew it",
-    ],
-    correct: 3,
-    explanation: "A strong wind blew the kite over the fence.",
-  },
-];
+import { getStoryById } from "@/content";
+import { usePlayer } from "@/hooks/usePlayer";
+import { shuffleArray } from "@/lib/shuffle";
+import { recordActivityResult } from "@/lib/player";
+import { Button } from "@/components/Button";
 
 export default function StoryPage() {
-  const [page, setPage] = useState(0);
+  const params = useParams<{ id: string }>();
+  const storyId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const story = getStoryById(storyId);
+
+  const { player, loading: playerLoading, awardXP, markStoryCompleted } =
+    usePlayer();
+
+  useEffect(() => {
+    if (!playerLoading && !player) {
+      window.location.href = "/players";
+    }
+  }, [playerLoading, player]);
+
+  // Shuffle question order and each question's option order once per
+  // visit, so a learner can't just memorize "question 3 = B". Answers
+  // are always checked by option id, so shuffling never breaks scoring.
+  const questions = useMemo(() => {
+    if (!story) return [];
+
+    return shuffleArray(story.questions).map((q) => ({
+      ...q,
+      options: shuffleArray(q.options),
+    }));
+  }, [story]);
+
+  const [scene, setScene] = useState(0);
   const [question, setQuestion] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(
+    null
+  );
   const [showResult, setShowResult] = useState(false);
-  const [xp, setXp] = useState(0);
+  const [earnedXp, setEarnedXp] = useState(0);
   const [finished, setFinished] = useState(false);
 
-  const readingFinished = page >= story.totalPages;
+  if (!story) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-5 text-center text-white">
+        <div className="max-w-md">
+          <div className="text-6xl">🧭</div>
 
-  const currentQuestion = questions[question];
+          <h1 className="mt-6 text-3xl font-black">Adventure not found</h1>
 
-  function nextPage() {
-    setPage((current) => current + 1);
+          <p className="mt-3 text-slate-400">
+            We couldn&apos;t find that story. It may have moved, or it
+            doesn&apos;t exist yet.
+          </p>
+
+          <Link href="/story" className="mt-8 inline-block">
+            <Button variant="primary" className="px-7 py-4">
+              Back to Story Forest 🌳
+            </Button>
+          </Link>
+        </div>
+      </main>
+    );
   }
 
-  function chooseAnswer(index: number) {
-    if (selectedAnswer !== null) return;
+  // A coming_soon story exists in the catalogue (real title/description/
+  // xp/etc.) but has no verified scenes or questions — it must never be
+  // rendered as playable, even via a direct/legacy URL that bypasses the
+  // Story Forest card. Checked before any reading/quiz state is touched.
+  if (story.status === "coming_soon") {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-5 text-center text-white">
+        <div className="max-w-md">
+          <div className="text-6xl">🚧</div>
 
-    setSelectedAnswer(index);
+          <h1 className="mt-6 text-3xl font-black">{story.title}</h1>
 
-    if (index === currentQuestion.correct) {
-      setXp((current) => current + 20);
+          <p className="mt-3 text-slate-400">
+            This adventure is still being written. Check back soon!
+          </p>
+
+          <Link href="/story" className="mt-8 inline-block">
+            <Button variant="primary" className="px-7 py-4">
+              Back to Story Forest 🌳
+            </Button>
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  if (playerLoading || !player) {
+    return null;
+  }
+
+  const readingFinished = scene >= story.scenes.length;
+  const currentQuestion = questions[question];
+
+  function nextScene() {
+    if (!player) return;
+
+    const isLastScene = scene === story!.scenes.length - 1;
+
+    if (isLastScene) {
+      recordActivityResult({
+        id: crypto.randomUUID(),
+        playerId: player.id,
+        activityType: "story_reading",
+        activityId: story!.id,
+        storyId: story!.id,
+        skills: ["reading_comprehension"],
+        correct: null,
+        attempts: 1,
+        hintsUsed: 0,
+        xpAwarded: 0,
+        timestamp: new Date().toISOString(),
+      });
     }
 
+    setScene((current) => current + 1);
+  }
+
+  function chooseAnswer(optionId: string) {
+    if (selectedOptionId !== null || !player) return;
+
+    const correct = optionId === currentQuestion.correctOptionId;
+
+    setSelectedOptionId(optionId);
     setShowResult(true);
+
+    if (correct) {
+      setEarnedXp((current) => current + currentQuestion.xp);
+    }
+
+    recordActivityResult({
+      id: crypto.randomUUID(),
+      playerId: player.id,
+      activityType: "story_question",
+      activityId: currentQuestion.id,
+      storyId: story!.id,
+      skills: currentQuestion.skills,
+      correct,
+      attempts: 1,
+      hintsUsed: 0,
+      difficulty: currentQuestion.difficulty,
+      xpAwarded: correct ? currentQuestion.xp : 0,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   function nextQuestion() {
     if (question < questions.length - 1) {
       setQuestion((current) => current + 1);
-      setSelectedAnswer(null);
+      setSelectedOptionId(null);
       setShowResult(false);
     } else {
       setFinished(true);
+      awardXP(earnedXp);
+      markStoryCompleted(story!.id);
     }
   }
 
@@ -116,7 +188,7 @@ export default function StoryPage() {
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2">
-            ⭐ {xp} XP
+            ⭐ {earnedXp} XP
           </div>
         </header>
 
@@ -129,7 +201,7 @@ export default function StoryPage() {
               <div className="mb-2 flex justify-between text-xs text-slate-500">
                 <span>Reading</span>
                 <span>
-                  Page {page + 1} of {story.totalPages}
+                  Page {scene + 1} of {story.scenes.length}
                 </span>
               </div>
 
@@ -137,7 +209,7 @@ export default function StoryPage() {
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-green-500 transition-all"
                   style={{
-                    width: `${((page + 1) / story.totalPages) * 100}%`,
+                    width: `${((scene + 1) / story.scenes.length) * 100}%`,
                   }}
                 />
               </div>
@@ -147,7 +219,7 @@ export default function StoryPage() {
             <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/5">
 
               <div className="flex h-64 items-center justify-center bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-600 text-8xl">
-                {story.pages[page].illustration}
+                {story.scenes[scene].illustration}
               </div>
 
               <div className="p-7 sm:p-10">
@@ -163,14 +235,14 @@ export default function StoryPage() {
                 </div>
 
                 <p className="text-xl font-medium leading-9 text-slate-200 sm:text-2xl sm:leading-10">
-                  {story.pages[page].text}
+                  {story.scenes[scene].text}
                 </p>
 
                 <button
-                  onClick={nextPage}
+                  onClick={nextScene}
                   className="mt-8 w-full rounded-2xl bg-gradient-to-r from-emerald-400 to-green-500 py-4 text-lg font-black text-slate-950 transition hover:scale-[1.01]"
                 >
-                  {page === story.totalPages - 1
+                  {scene === story.scenes.length - 1
                     ? "Finish Reading →"
                     : "Next Page →"}
                 </button>
@@ -180,7 +252,7 @@ export default function StoryPage() {
         )}
 
         {/* QUESTIONS */}
-        {readingFinished && !finished && (
+        {readingFinished && !finished && currentQuestion && (
           <section className="mt-8">
 
             <div className="mb-8 text-center">
@@ -198,24 +270,24 @@ export default function StoryPage() {
             <div className="rounded-[2rem] border border-white/10 bg-white/5 p-7 sm:p-10">
 
               <h3 className="text-2xl font-black leading-tight sm:text-3xl">
-                {currentQuestion.question}
+                {currentQuestion.prompt}
               </h3>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {currentQuestion.answers.map((answer, index) => {
+                {currentQuestion.options.map((option, index) => {
 
                   const isCorrect =
-                    selectedAnswer !== null &&
-                    index === currentQuestion.correct;
+                    selectedOptionId !== null &&
+                    option.id === currentQuestion.correctOptionId;
 
                   const isWrong =
-                    selectedAnswer === index &&
-                    index !== currentQuestion.correct;
+                    selectedOptionId === option.id &&
+                    option.id !== currentQuestion.correctOptionId;
 
                   return (
                     <button
-                      key={answer}
-                      onClick={() => chooseAnswer(index)}
+                      key={option.id}
+                      onClick={() => chooseAnswer(option.id)}
                       className={`rounded-2xl border p-5 text-left text-lg font-bold transition ${
                         isCorrect
                           ? "border-emerald-400 bg-emerald-500/20 text-emerald-300"
@@ -228,7 +300,7 @@ export default function StoryPage() {
                         {String.fromCharCode(65 + index)}
                       </span>
 
-                      {answer}
+                      {option.text}
 
                       {isCorrect && (
                         <span className="float-right">✓</span>
@@ -245,24 +317,24 @@ export default function StoryPage() {
               {showResult && (
                 <div
                   className={`mt-6 rounded-2xl p-5 ${
-                    selectedAnswer === currentQuestion.correct
+                    selectedOptionId === currentQuestion.correctOptionId
                       ? "bg-emerald-500/10"
                       : "bg-orange-500/10"
                   }`}
                 >
                   <p className="text-lg font-black">
-                    {selectedAnswer === currentQuestion.correct
+                    {selectedOptionId === currentQuestion.correctOptionId
                       ? "🎉 Excellent!"
-                      : "💡 Almost! Let's learn from it."}
+                      : "💡 Almost! Let\u2019s learn from it."}
                   </p>
 
                   <p className="mt-2 text-sm leading-6 text-slate-400">
                     {currentQuestion.explanation}
                   </p>
 
-                  {selectedAnswer === currentQuestion.correct && (
+                  {selectedOptionId === currentQuestion.correctOptionId && (
                     <p className="mt-3 font-black text-yellow-400">
-                      ⭐ +20 XP
+                      ⭐ +{currentQuestion.xp} XP
                     </p>
                   )}
 
@@ -298,7 +370,8 @@ export default function StoryPage() {
               </h2>
 
               <p className="mx-auto mt-4 max-w-md text-white/70">
-                You finished The Lost Kite and completed the reading challenge.
+                You finished {story.title} and completed the reading
+                challenge.
               </p>
 
               <div className="mx-auto mt-8 flex max-w-sm justify-center gap-4">
@@ -308,7 +381,7 @@ export default function StoryPage() {
                     XP EARNED
                   </p>
                   <p className="mt-2 text-3xl font-black text-yellow-300">
-                    ⭐ {xp}
+                    ⭐ {earnedXp}
                   </p>
                 </div>
 

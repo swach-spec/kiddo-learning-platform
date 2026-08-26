@@ -3,69 +3,88 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Player } from "@/lib/kiddo";
-
-const worlds = [
-  {
-    title: "Story Forest",
-    subtitle: "Read & discover",
-    icon: "📖",
-    color: "from-emerald-400 to-green-600",
-    progress: 65,
-    unlocked: true,
-  },
-  {
-    title: "Word Castle",
-    subtitle: "Grammar & words",
-    icon: "🏰",
-    color: "from-purple-400 to-indigo-600",
-    progress: 42,
-    unlocked: true,
-  },
-  {
-    title: "Puzzle Island",
-    subtitle: "Think & solve",
-    icon: "🧩",
-    color: "from-orange-400 to-amber-600",
-    progress: 28,
-    unlocked: true,
-  },
-  {
-    title: "Number Mountain",
-    subtitle: "Math adventures",
-    icon: "🔢",
-    color: "from-blue-400 to-cyan-600",
-    progress: 0,
-    unlocked: false,
-  },
-];
+import { getCurrentPlayer } from "@/lib/player";
+import { getAllStories } from "@/content";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { WorldCard, World } from "@/components/WorldCard";
 
 export default function Home() {
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem("kiddo-current-player");
+    const current = getCurrentPlayer();
 
-    if (saved) {
-      try {
-        const parsedPlayer: Player = JSON.parse(saved);
-        setPlayer(parsedPlayer);
-      } catch {
-        localStorage.removeItem("kiddo-current-player");
-        window.location.href = "/players";
-        return;
-      }
-    } else {
+    if (!current) {
       window.location.href = "/players";
       return;
     }
 
+    setPlayer(current);
     setLoading(false);
   }, []);
 
   if (loading || !player) {
     return null;
   }
+
+  // Story Forest is the only world with real content so far — its
+  // progress is derived from the player's actual completions. The
+  // other worlds have no content yet (Phase 2+), so they stay as
+  // static placeholders until they do.
+  //
+  // Progress is measured against playable ("ready") stories only —
+  // coming_soon catalogue entries have no content a learner could ever
+  // complete, so counting them in the denominator would make 100%
+  // unreachable and understate real progress (Phase 1.1 fix).
+  const readyStories = getAllStories().filter(
+    (story) => story.status === "ready"
+  );
+  const storyForestProgress =
+    readyStories.length === 0
+      ? 0
+      : Math.round(
+          (player.completedStoryIds.length / readyStories.length) * 100
+        );
+
+  const worlds: World[] = [
+    {
+      title: "Story Forest",
+      subtitle: "Read & discover",
+      icon: "📖",
+      color: "from-emerald-400 to-green-600",
+      progress: storyForestProgress,
+      unlocked: true,
+      href: "/story",
+    },
+    {
+      title: "Word Castle",
+      subtitle: "Grammar & words",
+      icon: "🏰",
+      color: "from-purple-400 to-indigo-600",
+      progress: 42,
+      unlocked: true,
+      href: "#",
+    },
+    {
+      title: "Puzzle Island",
+      subtitle: "Think & solve",
+      icon: "🧩",
+      color: "from-orange-400 to-amber-600",
+      progress: 28,
+      unlocked: true,
+      href: "#",
+    },
+    {
+      title: "Number Mountain",
+      subtitle: "Math adventures",
+      icon: "🔢",
+      color: "from-blue-400 to-cyan-600",
+      progress: 0,
+      unlocked: false,
+      href: "#",
+    },
+  ];
 
   return (
     <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
@@ -127,9 +146,7 @@ export default function Home() {
               className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-2 pr-4 transition hover:bg-white/10"
             >
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 text-xl">
-                {player.avatar}
-              </div>
+              <PlayerAvatar avatar={player.avatar} size="sm" />
 
               <div className="hidden text-left sm:block">
 
@@ -224,7 +241,7 @@ export default function Home() {
             </h3>
 
             <p className="mt-2 text-sm leading-6 text-slate-400">
-              Find the hidden word and earn today's bonus.
+              Find the hidden word and earn today&apos;s bonus.
             </p>
 
             <button className="mt-6 w-full rounded-2xl bg-white/10 py-3 font-bold transition hover:bg-white/15">
@@ -259,78 +276,9 @@ export default function Home() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
             {worlds.map((world) => (
-
-              <Link
-                key={world.title}
-                href={world.title === "Story Forest" ? "/story" : "#"}
-                className={`group relative overflow-hidden rounded-[1.75rem] border border-white/10 p-5 text-left transition ${
-                  world.unlocked
-                    ? "bg-white/5 hover:-translate-y-1 hover:bg-white/10"
-                    : "cursor-not-allowed bg-white/[0.025] opacity-50"
-                }`}
-              >
-
-                <div
-                  className={`mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${world.color} text-3xl shadow-lg`}
-                >
-                  {world.icon}
-                </div>
-
-                <h3 className="text-lg font-black">
-                  {world.title}
-                </h3>
-
-                <p className="mt-1 text-sm text-slate-400">
-                  {world.subtitle}
-                </p>
-
-                {world.unlocked ? (
-
-                  <div className="mt-5">
-
-                    <div className="mb-2 flex justify-between text-xs">
-
-                      <span className="text-slate-500">
-                        Progress
-                      </span>
-
-                      <span className="font-bold">
-                        {world.progress}%
-                      </span>
-
-                    </div>
-
-                    <div className="h-2 overflow-hidden rounded-full bg-white/10">
-
-                      <div
-                        className={`h-full rounded-full bg-gradient-to-r ${world.color}`}
-                        style={{
-                          width: `${world.progress}%`,
-                        }}
-                      />
-
-                    </div>
-
-                  </div>
-
-                ) : (
-
-                  <div className="mt-5 text-xs font-bold text-slate-500">
-                    🔒 Unlock at Level 6
-                  </div>
-
-                )}
-
-                <div className="absolute right-5 top-5 text-slate-600 transition group-hover:text-white">
-                  →
-                </div>
-
-              </Link>
-
+              <WorldCard key={world.title} world={world} />
             ))}
-
           </div>
 
         </section>
