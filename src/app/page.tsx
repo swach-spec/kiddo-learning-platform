@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Player } from "@/lib/kiddo";
-import { getCurrentPlayer } from "@/lib/player";
+import { getCurrentPlayer, getActivityResults } from "@/lib/player";
 import { getAllStories } from "@/content";
+import { getTodaysAdventure } from "@/lib/adventure";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { WorldCard, World } from "@/components/WorldCard";
+import { TodayAdventureCard } from "@/components/TodayAdventureCard";
 
 export default function Home() {
   const [player, setPlayer] = useState<Player | null>(null);
@@ -46,6 +48,15 @@ export default function Home() {
       : Math.round(
           (player.completedStoryIds.length / readyStories.length) * 100
         );
+
+  // Adventure engine consumes only existing persisted state (player +
+  // content catalogue + activity log) — it does not write anything, so
+  // recomputing it on every render/refresh is always safe.
+  const adventure = getTodaysAdventure(
+    player,
+    getAllStories(),
+    getActivityResults(player.id)
+  );
 
   const worlds: World[] = [
     {
@@ -250,6 +261,11 @@ export default function Home() {
 
           </div>
 
+        </section>
+
+        {/* Today's Adventure */}
+        <section className="mt-10">
+          <TodayAdventureCard adventure={adventure} />
         </section>
 
         {/* Worlds */}
