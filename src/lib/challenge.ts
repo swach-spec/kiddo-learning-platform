@@ -1,0 +1,135 @@
+import { vocabularyChallenges } from "@/content/demo/vocabulary-challenges";
+import { ActivityResult } from "@/types/activity";
+import { VocabularyChallenge } from "@/types/challenge";
+import { PartOfSpeech, Question, Skill, Story } from "@/types/content";
+
+export type LearningSignal = {
+  activityResultId: string;
+  activityId: string;
+  storyId: string;
+  skill: Skill;
+  correct: false;
+  timestamp: string;
+  /** Only vocabulary signals with verified source metadata include these. */
+  word?: string;
+  partOfSpeech?: PartOfSpeech;
+};
+
+export type TargetedChallenge = {
+  challenge: VocabularyChallenge;
+  signal: LearningSignal;
+};
+
+type SourceQuestion = {
+  story: Story;
+  question: Question;
+};
+
+export function getVocabularyChallengeById(
+  id: string
+): VocabularyChallenge | undefined {
+  return vocabularyChallenges.find((challenge) => challenge.id === id);
+}
+
+/**
+ * Keeps skill-level signals for every incorrect story question. Vocabulary
+ * detail is only attached when it is explicitly present on source content;
+ * nothing is inferred or duplicated into ActivityResult.
+ */
+export function getLearningSignals(
+  stories: Story[],
+  activityResults: ActivityResult[]
+): LearningSignal[] {
+  return activityResults.flatMap((result) => {
+    if (result.activityType !== "story_question" || result.correct !== false) {
+      return [];
+    }
+
+    const source = getSourceQuestion(stories, result);
+    if (!source) return [];
+
+    return source.question.skills.map((skill): LearningSignal => {
+      const signal: LearningSignal = {
+        activityResultId: result.id,
+        activityId: result.activityId,
+        storyId: source.story.id,
+        skill,
+        correct: false,
+        timestamp: result.timestamp,
+      };
+
+      if (
+        skill === "vocabulary" &&
+        source.question.word &&
+        source.question.partOfSpeech
+      ) {
+        return {
+          ...signal,
+          word: source.question.word,
+          partOfSpeech: source.question.partOfSpeech,
+        };
+      }
+
+      return signal;
+    });
+  });
+}
+
+/** Selects the latest compatible challenge using strict skill + POS matching. */
+export function getTargetedChallenge(
+  stories: Story[],
+  activityResults: ActivityResult[]
+): TargetedChallenge | null {
+  const signals = getLearningSignals(stories, activityResults);
+
+  for (let index = signals.length - 1; index >= 0; index -= 1) {
+    const signal = signals[index];
+
+    if (!signal.partOfSpeech) continue;
+
+    const challenge = vocabularyChallenges.find(
+      (candidate) =>
+        candidate.skill === signal.skill &&
+        candidate.partOfSpeech === signal.partOfSpeech
+    );
+
+    if (challenge) return { challenge, signal };
+  }
+
+  return null;
+}
+
+/** Finds a compatible challenge for an already-verified source question. */
+export function getChallengeForQuestion(
+  question: Question
+): VocabularyChallenge | null {
+  if (
+    !question.word ||
+    !question.partOfSpeech ||
+    !question.skills.includes("vocabulary")
+  ) {
+    return null;
+  }
+
+  return (
+    vocabularyChallenges.find(
+      (challenge) =>
+        challenge.skill === "vocabulary" &&
+        challenge.partOfSpeech === question.partOfSpeech
+    ) ?? null
+  );
+}
+
+function getSourceQuestion(
+  stories: Story[],
+  result: ActivityResult
+): SourceQuestion | null {
+  if (!result.storyId) return null;
+
+  const story = stories.find((candidate) => candidate.id === result.storyId);
+  const question = story?.questions.find(
+    (candidate) => candidate.id === result.activityId
+  );
+
+  return story && question ? { story, question } : null;
+}

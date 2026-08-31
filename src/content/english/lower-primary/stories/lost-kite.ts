@@ -52,6 +52,8 @@ export const lostKite: Story = {
       correctOptionId: "c",
       explanation: "The story tells us that Tom's favourite kite was red.",
       skills: ["reading_comprehension", "vocabulary"],
+      word: "red",
+      partOfSpeech: "adjective",
       xp: 20,
     },
     {

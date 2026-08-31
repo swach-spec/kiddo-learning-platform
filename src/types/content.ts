@@ -30,6 +30,12 @@ export type Skill =
   | "sentence_construction"
   | "writing";
 
+// Parts of speech currently supported by the vocabulary foundation.
+// Keeping this as a closed union makes new categories an explicit
+// content-model decision rather than an untyped string scattered through
+// questions and challenges.
+export type PartOfSpeech = "adjective" | "noun" | "verb";
+
 export type QuestionOption = {
   id: string;
   text: string;
@@ -43,6 +49,10 @@ export type Question = {
   correctOptionId: string;
   explanation: string;
   skills: Skill[];
+  /** The explicit vocabulary word this question teaches, when verified. */
+  word?: string;
+  /** Present only when `word` has verified part-of-speech metadata. */
+  partOfSpeech?: PartOfSpeech;
   /** XP awarded for a correct answer on first attempt. */
   xp: number;
   difficulty?: 1 | 2 | 3;

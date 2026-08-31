@@ -12,6 +12,11 @@ const STEP_ICON: Record<AdventureStepType, string> = {
 
 export function TodayAdventureCard({ adventure }: { adventure: TodayAdventure }) {
   const currentStep = adventure.steps.find((step) => step.status === "available");
+  const currentStepHref = currentStep?.storyId
+    ? `/story/${currentStep.storyId}`
+    : currentStep?.challengeId
+      ? `/challenge/${currentStep.challengeId}`
+      : null;
 
   return (
     <Card className="p-7 backdrop-blur sm:p-10">
@@ -55,10 +60,10 @@ export function TodayAdventureCard({ adventure }: { adventure: TodayAdventure })
               {currentStep.description}
             </p>
 
-            {currentStep.storyId && (
-              <Link href={`/story/${currentStep.storyId}`} className="mt-5 block">
+            {currentStepHref && (
+              <Link href={currentStepHref} className="mt-5 block">
                 <Button variant="primary" className="w-full sm:w-auto sm:px-8">
-                  Continue →
+                  {currentStep.type === "challenge" ? "Start Challenge →" : "Continue →"}
                 </Button>
               </Link>
             )}

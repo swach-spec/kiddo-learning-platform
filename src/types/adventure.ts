@@ -23,6 +23,8 @@ export type AdventureStep = {
   status: AdventureStepStatus;
   /** Present when this step links into an existing story (e.g. "reading"). */
   storyId?: string;
+  /** Present when this step links to a compatible vocabulary challenge. */
+  challengeId?: string;
   /** Skills this step exercises, when known from real content metadata. */
   skills?: Skill[];
   /**

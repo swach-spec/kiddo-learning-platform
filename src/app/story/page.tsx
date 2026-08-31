@@ -8,6 +8,7 @@ import { getAllStories } from "@/content";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { XPPill } from "@/components/XPPill";
 import { StoryCard } from "@/components/StoryCard";
+import { WordHelper } from "@/components/WordHelper";
 
 export default function StoryForest() {
   const [player, setPlayer] = useState<Player | null>(null);
@@ -171,6 +172,8 @@ export default function StoryForest() {
           </div>
 
         </section>
+
+        <WordHelper className="mt-8" />
 
         <footer className="py-10 text-center text-xs text-slate-600">
           🌳 Every story is a new adventure.

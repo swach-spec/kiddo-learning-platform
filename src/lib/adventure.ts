@@ -2,6 +2,7 @@ import { Player } from "@/lib/kiddo";
 import { Story, Skill } from "@/types/content";
 import { ActivityResult } from "@/types/activity";
 import { AdventureStep, TodayAdventure } from "@/types/adventure";
+import { getTargetedChallenge } from "@/lib/challenge";
 
 /**
  * Decides what a learner should do today, purely from existing
@@ -57,12 +58,7 @@ export function getTodaysAdventure(
         status: "coming_soon",
       };
 
-  // Practice and Challenge: the repository has no practice bank,
-  // challenge bank, or any mechanism distinct from the story reader's
-  // built-in comprehension quiz. Per the Phase 2 content-honesty
-  // constraint, these are represented as coming_soon rather than
-  // invented — never rendered as playable, never given fabricated
-  // content.
+  // Practice still has no verified content bank or mechanism.
   const practiceStep: AdventureStep = {
     id: "practice",
     type: "practice",
@@ -71,13 +67,28 @@ export function getTodaysAdventure(
     status: "coming_soon",
   };
 
-  const challengeStep: AdventureStep = {
-    id: "challenge",
-    type: "challenge",
-    title: "Challenge",
-    description: "A bigger challenge is coming soon.",
-    status: "coming_soon",
-  };
+  // Challenge selection is read-only and content-led. Incorrect questions
+  // always retain their skill-level signals; only an explicit vocabulary
+  // word + part of speech can match the isolated vocabulary challenge bank.
+  const targetedChallenge = getTargetedChallenge(stories, activityResults);
+  const challengeStep: AdventureStep =
+    readingCompleted && targetedChallenge
+      ? {
+          id: "challenge",
+          type: "challenge",
+          title: "Word Challenge",
+          description: `Try an ${targetedChallenge.signal.partOfSpeech} challenge to practise a word skill.`,
+          status: "available",
+          challengeId: targetedChallenge.challenge.id,
+          skills: [targetedChallenge.challenge.skill],
+        }
+      : {
+          id: "challenge",
+          type: "challenge",
+          title: "Challenge",
+          description: "A bigger challenge is coming soon.",
+          status: "coming_soon",
+        };
 
   // Reward is a pure readout of XP already persisted through
   // completing the reading step — summed from the existing activity

@@ -9,6 +9,7 @@ import { getTodaysAdventure } from "@/lib/adventure";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { WorldCard, World } from "@/components/WorldCard";
 import { TodayAdventureCard } from "@/components/TodayAdventureCard";
+import { WordHelper } from "@/components/WordHelper";
 
 export default function Home() {
   const [player, setPlayer] = useState<Player | null>(null);
@@ -267,6 +268,8 @@ export default function Home() {
         <section className="mt-10">
           <TodayAdventureCard adventure={adventure} />
         </section>
+
+        <WordHelper className="mt-6" />
 
         {/* Worlds */}
         <section className="mt-10">

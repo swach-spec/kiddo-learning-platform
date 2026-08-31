@@ -7,7 +7,9 @@ import { getStoryById } from "@/content";
 import { usePlayer } from "@/hooks/usePlayer";
 import { shuffleArray } from "@/lib/shuffle";
 import { recordActivityResult } from "@/lib/player";
+import { getChallengeForQuestion } from "@/lib/challenge";
 import { Button } from "@/components/Button";
+import { WordHelper } from "@/components/WordHelper";
 
 export default function StoryPage() {
   const params = useParams<{ id: string }>();
@@ -99,6 +101,9 @@ export default function StoryPage() {
 
   const readingFinished = scene >= story.scenes.length;
   const currentQuestion = questions[question];
+  const relatedChallenge = currentQuestion
+    ? getChallengeForQuestion(currentQuestion)
+    : null;
 
   function nextScene() {
     if (!player) return;
@@ -325,7 +330,7 @@ export default function StoryPage() {
                   <p className="text-lg font-black">
                     {selectedOptionId === currentQuestion.correctOptionId
                       ? "🎉 Excellent!"
-                      : "💡 Almost! Let\u2019s learn from it."}
+                      : "❌ Not quite."}
                   </p>
 
                   <p className="mt-2 text-sm leading-6 text-slate-400">
@@ -337,6 +342,28 @@ export default function StoryPage() {
                       ⭐ +{currentQuestion.xp} XP
                     </p>
                   )}
+
+                  {selectedOptionId !== currentQuestion.correctOptionId &&
+                    currentQuestion.word &&
+                    currentQuestion.partOfSpeech && (
+                      <div className="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 p-4 text-sm leading-6 text-slate-300">
+                        <p>
+                          Word to remember: {" "}
+                          <span className="font-black text-red-300">
+                            {currentQuestion.word}
+                          </span>{" "}
+                          is an {currentQuestion.partOfSpeech}.
+                        </p>
+                        {relatedChallenge && (
+                          <Link
+                            href={`/challenge/${relatedChallenge.id}`}
+                            className="mt-3 inline-block font-black text-yellow-300 hover:text-yellow-200"
+                          >
+                            Try a related challenge →
+                          </Link>
+                        )}
+                      </div>
+                    )}
 
                   <button
                     onClick={nextQuestion}
@@ -407,6 +434,11 @@ export default function StoryPage() {
 
           </section>
         )}
+
+        <WordHelper
+          className="mt-8"
+          initialText={readingFinished ? currentQuestion?.word : undefined}
+        />
 
       </div>
     </main>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Player } from "@/lib/kiddo";
 import { getPlayers, setCurrentPlayer } from "@/lib/player";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { WordHelper } from "@/components/WordHelper";
 
 export default function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -117,6 +118,8 @@ export default function PlayersPage() {
           >
             ＋ Add New Explorer
           </button>
+
+          <WordHelper className="mt-6" />
 
         </section>
 

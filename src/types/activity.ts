@@ -4,7 +4,10 @@ import { Skill } from "@/types/content";
 // intentionally small for Phase 1 — new activity types (games,
 // puzzles, spelling drills) can extend this union later without
 // touching the shape of ActivityResult itself.
-export type ActivityType = "story_reading" | "story_question";
+export type ActivityType =
+  | "story_reading"
+  | "story_question"
+  | "vocabulary_challenge";
 
 // A single recorded attempt at an activity. This is the foundational
 // event KIDDO's future adaptive engine, mastery model and parent
