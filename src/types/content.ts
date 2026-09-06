@@ -4,10 +4,10 @@
 // questions) as opposed to player/persistence types, which live in
 // src/lib/kiddo.ts and src/types/activity.ts.
 
-// Only English exists today. The union is written so adding a subject
-// later (kiswahili, mathematics, science, social_studies) is a type
-// change in one place, not a rewrite.
-export type Subject = "english";
+// English and Mathematics are the two subjects proven out so far. The
+// union is written so adding another subject later (kiswahili, science,
+// social_studies) is a type change in one place, not a rewrite.
+export type Subject = "english" | "mathematics";
 
 // Grade is the specific school grade (1-6). GradeBand is the coarser
 // grouping used for navigation/unlocking, matching the long-term
@@ -28,7 +28,12 @@ export type Skill =
   | "spelling"
   | "grammar"
   | "sentence_construction"
-  | "writing";
+  | "writing"
+  // Mathematics: only "number_sense" is proven out so far (Phase 3
+  // architecture proof). Addition/subtraction, multiplication/division,
+  // fractions, measurement, geometry and problem_solving are deliberately
+  // not added until real content exists for them.
+  | "number_sense";
 
 // Parts of speech currently supported by the vocabulary foundation.
 // Keeping this as a closed union makes new categories an explicit

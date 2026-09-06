@@ -59,6 +59,10 @@ export default function Home() {
     getActivityResults(player.id)
   );
 
+  // Only Story Forest has real, playable content today. The other worlds
+  // are represented honestly as locked/coming-soon rather than shown as
+  // unlocked with invented progress numbers and dead ("#") links — a
+  // child tapping them should never hit a page that does nothing.
   const worlds: World[] = [
     {
       title: "Story Forest",
@@ -71,25 +75,25 @@ export default function Home() {
     },
     {
       title: "Word Castle",
-      subtitle: "Grammar & words",
+      subtitle: "Grammar & words — coming soon",
       icon: "🏰",
       color: "from-purple-400 to-indigo-600",
-      progress: 42,
-      unlocked: true,
+      progress: 0,
+      unlocked: false,
       href: "#",
     },
     {
       title: "Puzzle Island",
-      subtitle: "Think & solve",
+      subtitle: "Think & solve — coming soon",
       icon: "🧩",
       color: "from-orange-400 to-amber-600",
-      progress: 28,
-      unlocked: true,
+      progress: 0,
+      unlocked: false,
       href: "#",
     },
     {
       title: "Number Mountain",
-      subtitle: "Math adventures",
+      subtitle: "Math adventures — coming soon",
       icon: "🔢",
       color: "from-blue-400 to-cyan-600",
       progress: 0,
@@ -179,7 +183,7 @@ export default function Home() {
         </header>
 
         {/* Welcome */}
-        <section className="mt-10 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
+        <section className="mt-10">
 
           {/* Main adventure */}
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-600 p-7 shadow-2xl shadow-purple-900/20 sm:p-10">
@@ -201,8 +205,7 @@ export default function Home() {
               </h2>
 
               <p className="mt-4 max-w-lg text-base leading-7 text-white/80">
-                Explore stories, solve puzzles, master words and collect
-                rewards as you learn.
+                Read stories, answer questions and collect XP as you learn.
               </p>
 
               <Link
@@ -226,39 +229,6 @@ export default function Home() {
             <div className="absolute bottom-6 right-5 text-3xl">
               ✨
             </div>
-
-          </div>
-
-          {/* Daily Challenge */}
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-7 backdrop-blur">
-
-            <div className="flex items-center justify-between">
-
-              <span className="text-sm font-bold text-slate-400">
-                DAILY CHALLENGE
-              </span>
-
-              <span className="rounded-full bg-orange-500/20 px-3 py-1 text-xs font-bold text-orange-300">
-                +50 XP
-              </span>
-
-            </div>
-
-            <div className="mt-8 text-5xl">
-              🧠
-            </div>
-
-            <h3 className="mt-5 text-2xl font-black">
-              Word Detective
-            </h3>
-
-            <p className="mt-2 text-sm leading-6 text-slate-400">
-              Find the hidden word and earn today&apos;s bonus.
-            </p>
-
-            <button className="mt-6 w-full rounded-2xl bg-white/10 py-3 font-bold transition hover:bg-white/15">
-              Start Challenge →
-            </button>
 
           </div>
 

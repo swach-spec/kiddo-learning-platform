@@ -51,7 +51,7 @@ const corrections: Record<string, string> = {
  * pure and read-only: it never reads or updates learner progress.
  */
 export function getWordHelperResult(input: string): WordHelperResult {
-  const words = input.toLowerCase().match(/[a-z]+/g) ?? [];
+  const words: string[] = input.toLowerCase().match(/[a-z]+/g) ?? [];
 
   const supported = entries.find((entry) => words.includes(entry.word));
   if (supported) {

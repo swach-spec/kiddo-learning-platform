@@ -42,7 +42,7 @@ export function WorldCard({ world }: { world: World }) {
         </div>
       ) : (
         <div className="mt-5 text-xs font-bold text-slate-500">
-          🔒 Unlock at Level 6
+          🚧 Coming soon
         </div>
       )}
 

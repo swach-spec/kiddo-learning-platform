@@ -423,12 +423,21 @@ export default function StoryPage() {
 
               </div>
 
-              <Link
-                href="/story"
-                className="mt-8 block rounded-2xl bg-white py-4 font-black text-indigo-700 hover:bg-yellow-300"
-              >
-                Back to Story Forest 🌳
-              </Link>
+              <div className="mx-auto mt-8 flex max-w-sm flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/story"
+                  className="flex-1 rounded-2xl bg-white/10 py-4 text-center font-black hover:bg-white/15"
+                >
+                  More Stories 🌳
+                </Link>
+
+                <Link
+                  href="/"
+                  className="flex-1 rounded-2xl bg-white py-4 text-center font-black text-indigo-700 hover:bg-yellow-300"
+                >
+                  See My Progress ⭐
+                </Link>
+              </div>
 
             </div>
 

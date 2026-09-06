@@ -3,16 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { getVocabularyChallengeById } from "@/lib/challenge";
-import { recordActivityResult } from "@/lib/player";
+import { getChallengeById } from "@/lib/challenge";
+import { recordActivityResult, getActivityResults } from "@/lib/player";
 import { usePlayer } from "@/hooks/usePlayer";
 import { Button } from "@/components/Button";
 import { WordHelper } from "@/components/WordHelper";
 
-export default function VocabularyChallengePage() {
+export default function ChallengePage() {
   const params = useParams<{ id: string }>();
   const challengeId = Array.isArray(params.id) ? params.id[0] : params.id;
-  const challenge = getVocabularyChallengeById(challengeId);
+  const challenge = getChallengeById(challengeId);
   const { player, loading, awardXP } = usePlayer();
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const submittedChallengeId = useRef<string | null>(null);
@@ -46,8 +46,23 @@ export default function VocabularyChallengePage() {
 
   const correct = selectedOptionId === challenge.correctOptionId;
 
+  // The submittedChallengeId ref (below) only guards repeats within a
+  // single mounted instance of this page — it does not survive a reload
+  // or a fresh navigation back to the same URL. This checks the
+  // persisted activity log itself, the same idempotency pattern
+  // markStoryCompleted already uses for story completions, so XP and the
+  // activity record for a given challenge are only ever written once per
+  // player, no matter how many times the page is reloaded or revisited.
+  const alreadyCompleted = getActivityResults(player.id).some(
+    (result) =>
+      result.activityType === "practice_challenge" &&
+      result.activityId === challenge.id
+  );
+
   function chooseAnswer(optionId: string) {
     if (
+      !challenge ||
+      !player ||
       selectedOptionId !== null ||
       submittedChallengeId.current === challenge.id
     ) {
@@ -58,23 +73,29 @@ export default function VocabularyChallengePage() {
     submittedChallengeId.current = challenge.id;
     setSelectedOptionId(optionId);
 
-    recordActivityResult({
-      id: crypto.randomUUID(),
-      playerId: player.id,
-      activityType: "vocabulary_challenge",
-      activityId: challenge.id,
-      skills: [challenge.skill],
-      correct: isCorrect,
-      attempts: 1,
-      hintsUsed: 0,
-      difficulty: challenge.difficulty,
-      xpAwarded: isCorrect ? challenge.xp : 0,
-      timestamp: new Date().toISOString(),
-    });
+    // Challenge XP is awarded exactly once per player, ever, for this
+    // challenge — not once per page load. A learner can still click
+    // through and see feedback on a repeat visit (harmless practice),
+    // but it neither re-records an activity result nor re-awards XP.
+    if (!alreadyCompleted) {
+      recordActivityResult({
+        id: crypto.randomUUID(),
+        playerId: player.id,
+        activityType: "practice_challenge",
+        activityId: challenge.id,
+        skills: [challenge.skill],
+        correct: isCorrect,
+        attempts: 1,
+        hintsUsed: 0,
+        difficulty: challenge.difficulty,
+        xpAwarded: isCorrect ? challenge.xp : 0,
+        timestamp: new Date().toISOString(),
+      });
 
-    // Challenge XP is awarded exactly once for this submitted answer. It is
-    // independent from story-question XP and never updates Story Reader state.
-    if (isCorrect) awardXP(challenge.xp);
+      // Challenge XP is awarded exactly once for this submitted answer. It is
+      // independent from story-question XP and never updates Story Reader state.
+      if (isCorrect) awardXP(challenge.xp);
+    }
   }
 
   return (
@@ -89,9 +110,11 @@ export default function VocabularyChallengePage() {
           </Link>
           <div className="text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-purple-300">
-              Vocabulary Challenge
+              {challenge.subject === "mathematics" ? "Maths Challenge" : "Vocabulary Challenge"}
             </p>
-            <h1 className="text-xl font-black">Word Practice</h1>
+            <h1 className="text-xl font-black">
+              {challenge.subject === "mathematics" ? "Number Practice" : "Word Practice"}
+            </h1>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-black text-yellow-300">
             +{challenge.xp} XP
@@ -100,7 +123,7 @@ export default function VocabularyChallengePage() {
 
         <section className="mt-10 rounded-[2rem] border border-white/10 bg-white/5 p-7 sm:p-10">
           <p className="text-sm font-bold uppercase tracking-widest text-emerald-400">
-            {challenge.partOfSpeech}
+            {challenge.partOfSpeech ?? challenge.skill.replace(/_/g, " ")}
           </p>
           <h2 className="mt-3 text-3xl font-black leading-tight sm:text-4xl">
             {challenge.prompt}
@@ -161,7 +184,7 @@ export default function VocabularyChallengePage() {
           )}
         </section>
 
-        <WordHelper className="mt-6" />
+        {challenge.subject === "english" && <WordHelper className="mt-6" />}
       </div>
     </main>
   );

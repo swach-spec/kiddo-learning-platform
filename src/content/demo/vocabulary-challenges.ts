@@ -1,14 +1,15 @@
-import { VocabularyChallenge } from "@/types/challenge";
+import { Challenge } from "@/types/challenge";
 
 // DEMO / FOUNDATION CONTENT
 //
 // This small, independently authored challenge bank demonstrates the
 // vocabulary targeting model. It is intentionally not exported through the
 // Story catalogue and must not be treated as story content.
-export const vocabularyChallenges: VocabularyChallenge[] = [
+export const vocabularyChallenges: Challenge[] = [
   {
     id: "demo-adjective-describing-word",
-    label: "demo_foundation",
+    subject: "english",
+    grade: 2,
     skill: "vocabulary",
     partOfSpeech: "adjective",
     prompt: "Which word is an adjective in this sentence: The tiny bird sang?",
@@ -25,7 +26,8 @@ export const vocabularyChallenges: VocabularyChallenge[] = [
   },
   {
     id: "demo-noun-naming-word",
-    label: "demo_foundation",
+    subject: "english",
+    grade: 2,
     skill: "vocabulary",
     partOfSpeech: "noun",
     prompt: "Which word is a noun in this sentence: A teacher smiles?",
@@ -42,7 +44,8 @@ export const vocabularyChallenges: VocabularyChallenge[] = [
   },
   {
     id: "demo-verb-action-word",
-    label: "demo_foundation",
+    subject: "english",
+    grade: 2,
     skill: "vocabulary",
     partOfSpeech: "verb",
     prompt: "Which word is a verb in this sentence: Children jump outside?",

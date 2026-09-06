@@ -1,7 +1,13 @@
 import { vocabularyChallenges } from "@/content/demo/vocabulary-challenges";
+import { mathsChallenges } from "@/content/demo/maths-challenges";
 import { ActivityResult } from "@/types/activity";
-import { VocabularyChallenge } from "@/types/challenge";
+import { Challenge } from "@/types/challenge";
 import { PartOfSpeech, Question, Skill, Story } from "@/types/content";
+
+// Single place every consumer looks a challenge up from, regardless of
+// subject — mirrors the pattern in content/index.ts (getAllStories),
+// which already concatenates per-subject arrays the same way.
+const allChallenges: Challenge[] = [...vocabularyChallenges, ...mathsChallenges];
 
 export type LearningSignal = {
   activityResultId: string;
@@ -16,7 +22,7 @@ export type LearningSignal = {
 };
 
 export type TargetedChallenge = {
-  challenge: VocabularyChallenge;
+  challenge: Challenge;
   signal: LearningSignal;
 };
 
@@ -25,10 +31,9 @@ type SourceQuestion = {
   question: Question;
 };
 
-export function getVocabularyChallengeById(
-  id: string
-): VocabularyChallenge | undefined {
-  return vocabularyChallenges.find((challenge) => challenge.id === id);
+/** Looks up any challenge by id, regardless of subject. */
+export function getChallengeById(id: string): Challenge | undefined {
+  return allChallenges.find((challenge) => challenge.id === id);
 }
 
 /**
@@ -102,7 +107,7 @@ export function getTargetedChallenge(
 /** Finds a compatible challenge for an already-verified source question. */
 export function getChallengeForQuestion(
   question: Question
-): VocabularyChallenge | null {
+): Challenge | null {
   if (
     !question.word ||
     !question.partOfSpeech ||
