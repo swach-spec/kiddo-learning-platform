@@ -146,13 +146,22 @@ export default function GamesPage() {
                   </p>
 
                   {unlock.unlocked ? (
-                    <button
-                      disabled
-                      className="mt-5 w-full rounded-2xl bg-emerald-500/20 px-4 py-3 text-sm font-black text-emerald-300"
-                    >
-                      Coming next →
-                    </button>
-                  ) : (
+  unlock.id === "memory-match" ? (
+    <Link
+      href="/games/memory-match"
+      className="mt-5 block w-full rounded-2xl bg-emerald-500 px-4 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-emerald-300"
+    >
+      Play Game →
+    </Link>
+  ) : (
+    <button
+      disabled
+      className="mt-5 w-full rounded-2xl bg-emerald-500/20 px-4 py-3 text-sm font-black text-emerald-300"
+    >
+      Coming next →
+    </button>
+  )
+) : (
                     <div className="mt-5 rounded-2xl bg-black/20 px-4 py-3 text-sm font-bold text-slate-500">
                       🔒 Reach Level {unlock.requiredLevel}
                     </div>

@@ -7,11 +7,8 @@ import { Skill } from "@/types/content";
 export type ActivityType =
   | "story_reading"
   | "story_question"
-  // Renamed from "vocabulary_challenge" (Phase 3→4): the same challenge
-  // shape and the same /challenge/[id] page now also serve Mathematics
-  // items, so the recorded activity type should not imply English-only.
-  | "practice_challenge";
-
+  | "practice_challenge"
+  | "memory_match";
 // A single recorded attempt at an activity. This is the foundational
 // event KIDDO's future adaptive engine, mastery model and parent
 // analytics will all read from — so every field here should be
