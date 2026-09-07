@@ -1,0 +1,60 @@
+import { Unlock } from "@/types/unlock";
+
+export const unlocks: Unlock[] = [
+  {
+    id: "game-room",
+    name: "Game Room",
+    description: "A place to play the games you earn through learning.",
+    type: "feature",
+    requiredLevel: 2,
+    icon: "🎮",
+  },
+  {
+    id: "memory-match",
+    name: "Memory Match",
+    description: "Test your memory and concentration.",
+    type: "game",
+    requiredLevel: 2,
+    icon: "🧠",
+  },
+  {
+    id: "checkers",
+    name: "Checkers",
+    description: "A classic strategy game.",
+    type: "game",
+    requiredLevel: 3,
+    icon: "🔴",
+  },
+  {
+    id: "word-builder",
+    name: "Word Builder",
+    description: "Build words and strengthen your vocabulary.",
+    type: "game",
+    requiredLevel: 4,
+    icon: "🔤",
+  },
+  {
+    id: "chess",
+    name: "Chess",
+    description: "Think ahead, plan your moves, and outsmart your opponent.",
+    type: "game",
+    requiredLevel: 6,
+    icon: "♟️",
+  },
+  {
+    id: "scrabble",
+    name: "Scrabble",
+    description: "Build words and compete for the highest score.",
+    type: "game",
+    requiredLevel: 7,
+    icon: "🔠",
+  },
+  {
+    id: "family-multiplayer",
+    name: "Family Multiplayer",
+    description: "Play selected KIDDO games with your family.",
+    type: "feature",
+    requiredLevel: 8,
+    icon: "👨‍👩‍👦",
+  },
+];
