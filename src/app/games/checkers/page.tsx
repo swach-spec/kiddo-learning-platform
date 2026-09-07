@@ -16,6 +16,7 @@ import {
   CheckersPlayer,
   createInitialBoard,
   countPieces,
+  getCaptureMoves,
   getLegalMoves,
 } from "@/lib/games/checkers";
 
@@ -44,6 +45,37 @@ function chooseComputerMove(board: CheckersBoard): CheckersMove | null {
     const bScore = (b.capture ? 10 : 0) + (b.to.row === 7 ? 3 : 0);
     return bScore - aScore;
   })[0];
+}
+
+function playComputerTurn(startBoard: CheckersBoard) {
+  let currentBoard = startBoard;
+  let totalMoves = 0;
+  let move = chooseComputerMove(currentBoard);
+
+  while (move) {
+    const result = applyMove(currentBoard, move);
+    currentBoard = result.board;
+    totalMoves += 1;
+
+    // Promotion ends the turn.
+    if (result.promoted || !move.capture) break;
+
+    const continuations = getCaptureMoves(currentBoard, "black").filter((candidate) =>
+      samePosition(candidate.from, move.to)
+    );
+
+    if (continuations.length === 0) break;
+
+    // Prefer another capture when several are available. The engine still
+    // enforces mandatory capture and the selected piece must continue.
+    move = [...continuations].sort((a, b) => {
+      const aScore = a.to.row === 7 ? 3 : 0;
+      const bScore = b.to.row === 7 ? 3 : 0;
+      return bScore - aScore;
+    })[0];
+  }
+
+  return { board: currentBoard, moves: totalMoves };
 }
 
 export default function CheckersPage() {
@@ -84,7 +116,7 @@ export default function CheckersPage() {
     setThinking(false);
   }
 
-  function finishGame(result: GameStatus) {
+  function finishGame(result: GameStatus, finalMoves = moves) {
     setStatus(result);
 
     if (result !== "won" || !player || rewarded) return;
@@ -95,9 +127,9 @@ export default function CheckersPage() {
       playerId: player.id,
       activityType: "checkers",
       activityId: GAME_ID,
-      skills: ["number_sense"],
+      skills: [],
       correct: true,
-      attempts: moves,
+      attempts: finalMoves,
       hintsUsed: 0,
       xpAwarded: GAME_XP,
       timestamp: new Date().toISOString(),
@@ -105,31 +137,25 @@ export default function CheckersPage() {
     setRewarded(true);
   }
 
-  function evaluatePosition(nextBoard: CheckersBoard, nextTurn: CheckersPlayer) {
+  function evaluatePosition(nextBoard: CheckersBoard, nextTurn: CheckersPlayer, moveCount = moves) {
     const opponent: CheckersPlayer = nextTurn === "red" ? "black" : "red";
     if (countPieces(nextBoard, opponent) === 0 || getLegalMoves(nextBoard, opponent).length === 0) {
-      finishGame(nextTurn === "red" ? "won" : "lost");
+      finishGame(nextTurn === "red" ? "won" : "lost", moveCount);
       return true;
     }
     return false;
   }
 
-  function makeComputerTurn(nextBoard: CheckersBoard) {
+  function makeComputerTurn(nextBoard: CheckersBoard, currentMoveCount: number) {
     setThinking(true);
 
     window.setTimeout(() => {
-      const computerMove = chooseComputerMove(nextBoard);
-      if (!computerMove) {
-        finishGame("won");
-        setThinking(false);
-        return;
-      }
+      const computerResult = playComputerTurn(nextBoard);
+      const totalMoveCount = currentMoveCount + computerResult.moves;
+      setBoard(computerResult.board);
+      setMoves(totalMoveCount);
 
-      const result = applyMove(nextBoard, computerMove);
-      setBoard(result.board);
-      setMoves((current) => current + 1);
-
-      if (!evaluatePosition(result.board, "red")) {
+      if (!evaluatePosition(computerResult.board, "red", totalMoveCount)) {
         setTurn("red");
       }
       setThinking(false);
@@ -148,18 +174,18 @@ export default function CheckersPage() {
 
       if (chosenMove) {
         const result = applyMove(board, chosenMove);
+        const nextMoveCount = moves + 1;
         setBoard(result.board);
         setSelected(null);
         setLegalMoves([]);
-        setMoves((current) => current + 1);
+        setMoves(nextMoveCount);
 
-        if (evaluatePosition(result.board, "black")) return;
+        if (evaluatePosition(result.board, "black", nextMoveCount)) return;
 
         // A capture can continue from the same piece. Promotion ends the turn.
         if (chosenMove.capture && !result.promoted) {
-          const continued = getLegalMoves(result.board, "red").filter(
-            (move) =>
-              samePosition(move.from, chosenMove.to) && Boolean(move.capture)
+          const continued = getCaptureMoves(result.board, "red").filter((move) =>
+            samePosition(move.from, chosenMove.to)
           );
 
           if (continued.length > 0) {
@@ -170,7 +196,7 @@ export default function CheckersPage() {
         }
 
         setTurn("black");
-        makeComputerTurn(result.board);
+        makeComputerTurn(result.board, nextMoveCount);
         return;
       }
     }
@@ -212,9 +238,9 @@ export default function CheckersPage() {
 
         <section className="mt-8 text-center">
           <p className="text-sm font-bold uppercase tracking-widest text-cyan-400">KIDDO Game</p>
-          <h1 className="mt-2 text-4xl font-black sm:text-5xl">Checkers 🔴</h1>
+          <h1 className="mt-2 text-4xl font-black sm:text-5xl">Draughts 🔴</h1>
           <p className="mx-auto mt-3 max-w-xl text-slate-400">
-            Think ahead, capture pieces and reach the other side to become a king.
+            Think ahead, capture pieces and reach the other side to become a flying king.
           </p>
         </section>
 
@@ -275,7 +301,7 @@ export default function CheckersPage() {
         </section>
 
         <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-slate-500">
-          Captures are mandatory. Select one of your pieces, then choose a highlighted square.
+          Captures are mandatory. Kings can move any distance along a clear diagonal. Select one of your pieces, then choose a highlighted square.
         </p>
 
         {status !== "playing" && (
