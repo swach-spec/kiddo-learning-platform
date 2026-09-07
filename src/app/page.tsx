@@ -241,6 +241,43 @@ export default function Home() {
 
         <WordHelper className="mt-6" />
 
+        {/* Game Room */}
+        <section className="mt-10">
+          <Link
+            href="/games"
+            className="group relative block overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-fuchsia-500/20 p-6 transition hover:-translate-y-1 hover:border-purple-400/40 hover:bg-white/10 sm:p-7"
+          >
+            <div className="flex items-center justify-between gap-5">
+              <div className="flex items-center gap-5">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-purple-600 text-3xl shadow-lg">
+                  🎮
+                </div>
+
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-widest text-cyan-400">
+                    Play & Earn
+                  </p>
+
+                  <h2 className="mt-1 text-2xl font-black">
+                    Game Room
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-400">
+                    Unlock games as you level up.
+                  </p>
+                </div>
+              </div>
+
+              <div className="hidden rounded-2xl bg-white/10 px-5 py-3 text-sm font-black transition group-hover:bg-white/20 sm:block">
+                Enter Game Room →
+              </div>
+
+              <div className="text-2xl sm:hidden">
+                →
+              </div>
+            </div>
+          </Link>
+        </section>
         {/* Worlds */}
         <section className="mt-10">
 
