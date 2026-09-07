@@ -70,24 +70,48 @@ export function getCaptureMoves(
       if (!piece || piece.player !== player) continue;
 
       for (const [dr, dc] of directions(piece)) {
-        const jumpedRow = row + dr;
-        const jumpedCol = col + dc;
-        const landingRow = row + dr * 2;
-        const landingCol = col + dc * 2;
+        let scanRow = row + dr;
+        let scanCol = col + dc;
 
-        if (!inside(landingRow, landingCol) || !inside(jumpedRow, jumpedCol)) {
+        if (!piece.king) {
+          const landingRow = row + dr * 2;
+          const landingCol = col + dc * 2;
+          if (!inside(landingRow, landingCol) || !inside(scanRow, scanCol)) continue;
+
+          const jumped = board[scanRow][scanCol];
+          if (!jumped || jumped.player === player || board[landingRow][landingCol]) continue;
+
+          moves.push({
+            from: { row, col },
+            to: { row: landingRow, col: landingCol },
+            capture: { row: scanRow, col: scanCol },
+          });
           continue;
         }
 
-        const jumped = board[jumpedRow][jumpedCol];
-        if (jumped?.player === player || !jumped) continue;
-        if (board[landingRow][landingCol]) continue;
+        // Flying king: scan until the first occupied square. If it is an
+        // opponent, every empty square beyond it is a legal landing square.
+        while (inside(scanRow, scanCol) && !board[scanRow][scanCol]) {
+          scanRow += dr;
+          scanCol += dc;
+        }
 
-        moves.push({
-          from: { row, col },
-          to: { row: landingRow, col: landingCol },
-          capture: { row: jumpedRow, col: jumpedCol },
-        });
+        if (!inside(scanRow, scanCol)) continue;
+
+        const jumped = board[scanRow][scanCol];
+        if (!jumped || jumped.player === player) continue;
+
+        let landingRow = scanRow + dr;
+        let landingCol = scanCol + dc;
+        while (inside(landingRow, landingCol) && !board[landingRow][landingCol]) {
+          moves.push({
+            from: { row, col },
+            to: { row: landingRow, col: landingCol },
+            capture: { row: scanRow, col: scanCol },
+          });
+          landingRow += dr;
+          landingCol += dc;
+        }
       }
     }
   }
@@ -107,14 +131,27 @@ export function getSimpleMoves(
       if (!piece || piece.player !== player) continue;
 
       for (const [dr, dc] of directions(piece)) {
-        const nextRow = row + dr;
-        const nextCol = col + dc;
-        if (!inside(nextRow, nextCol) || board[nextRow][nextCol]) continue;
+        let nextRow = row + dr;
+        let nextCol = col + dc;
 
-        moves.push({
-          from: { row, col },
-          to: { row: nextRow, col: nextCol },
-        });
+        if (!piece.king) {
+          if (!inside(nextRow, nextCol) || board[nextRow][nextCol]) continue;
+          moves.push({
+            from: { row, col },
+            to: { row: nextRow, col: nextCol },
+          });
+          continue;
+        }
+
+        // Flying king: any unobstructed square along the diagonal is legal.
+        while (inside(nextRow, nextCol) && !board[nextRow][nextCol]) {
+          moves.push({
+            from: { row, col },
+            to: { row: nextRow, col: nextCol },
+          });
+          nextRow += dr;
+          nextCol += dc;
+        }
       }
     }
   }
