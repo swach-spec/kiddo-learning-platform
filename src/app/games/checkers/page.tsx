@@ -19,6 +19,14 @@ import {
   getCaptureMoves,
   getLegalMoves,
 } from "@/lib/games/checkers";
+import {
+  getGameProgress,
+  getGameTiers,
+  getNextGameTier,
+  recordGameResult,
+} from "@/lib/game-progression";
+import { GameProgress } from "@/types/game-progress";
+import { GameResultCard } from "@/components/games/GameResultCard";
 
 const GAME_XP = 50;
 const GAME_ID = "checkers-v1";
@@ -27,10 +35,6 @@ type GameStatus = "playing" | "won" | "lost";
 
 function samePosition(a: { row: number; col: number }, b: { row: number; col: number }) {
   return a.row === b.row && a.col === b.col;
-}
-
-function moveKey(move: CheckersMove) {
-  return `${move.from.row}-${move.from.col}-${move.to.row}-${move.to.col}`;
 }
 
 function chooseComputerMove(board: CheckersBoard): CheckersMove | null {
@@ -66,8 +70,6 @@ function playComputerTurn(startBoard: CheckersBoard) {
 
     if (continuations.length === 0) break;
 
-    // Prefer another capture when several are available. The engine still
-    // enforces mandatory capture and the selected piece must continue.
     move = [...continuations].sort((a, b) => {
       const aScore = a.to.row === 7 ? 3 : 0;
       const bScore = b.to.row === 7 ? 3 : 0;
@@ -88,6 +90,7 @@ export default function CheckersPage() {
   const [moves, setMoves] = useState(0);
   const [rewarded, setRewarded] = useState(false);
   const [thinking, setThinking] = useState(false);
+  const [gameProgress, setGameProgress] = useState<GameProgress | null>(null);
 
   useEffect(() => {
     const current = getCurrentPlayer();
@@ -104,6 +107,7 @@ export default function CheckersPage() {
           result.activityType === "checkers" && result.activityId === GAME_ID
       )
     );
+    setGameProgress(getGameProgress(current.id, GAME_ID, current.grade));
   }, []);
 
   function resetGame() {
@@ -117,9 +121,13 @@ export default function CheckersPage() {
   }
 
   function finishGame(result: GameStatus, finalMoves = moves) {
-    setStatus(result);
+    if (status !== "playing" || !player) return;
 
-    if (result !== "won" || !player || rewarded) return;
+    setStatus(result);
+    const nextProgress = recordGameResult(player.id, GAME_ID, player.grade, result);
+    setGameProgress(nextProgress);
+
+    if (result !== "won" || rewarded) return;
 
     awardXP(player.id, GAME_XP);
     recordActivityResult({
@@ -218,10 +226,12 @@ export default function CheckersPage() {
     setLegalMoves([]);
   }
 
-  if (!player) return null;
+  if (!player || !gameProgress) return null;
 
   const redPieces = countPieces(board, "red");
   const blackPieces = countPieces(board, "black");
+  const tiers = getGameTiers();
+  const nextTier = getNextGameTier(gameProgress);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -244,7 +254,38 @@ export default function CheckersPage() {
           </p>
         </section>
 
-        <section className="mx-auto mt-8 flex max-w-3xl items-center justify-between rounded-3xl border border-white/10 bg-white/5 p-4">
+        <section className="mx-auto mt-6 max-w-3xl rounded-3xl border border-white/10 bg-white/5 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Game Level</p>
+              <p className="mt-1 text-2xl font-black capitalize text-cyan-300">{gameProgress.currentTier}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-slate-500">{gameProgress.wins} wins • {gameProgress.masteryScore}% mastery</p>
+              <p className="mt-1 text-sm font-bold text-slate-300">
+                {nextTier ? `Win ${Math.max(0, nextTier.unlockWins - gameProgress.wins)} more to reach ${nextTier.name}` : "Master level reached!"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {tiers.map((tier) => {
+              const unlocked = tiers.findIndex((item) => item.id === gameProgress.currentTier) >= tiers.findIndex((item) => item.id === tier.id);
+              return (
+                <div
+                  key={tier.id}
+                  className={`rounded-xl px-2 py-2 text-center text-xs font-black capitalize ${
+                    unlocked ? "bg-emerald-400/15 text-emerald-300" : "bg-white/5 text-slate-600"
+                  }`}
+                >
+                  {unlocked ? "✓ " : "🔒 "}{tier.name}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mx-auto mt-6 flex max-w-3xl items-center justify-between rounded-3xl border border-white/10 bg-white/5 p-4">
           <div>
             <p className="text-xs text-slate-500">YOUR PIECES</p>
             <p className="text-2xl font-black">{redPieces}</p>
@@ -305,27 +346,26 @@ export default function CheckersPage() {
         </p>
 
         {status !== "playing" && (
-          <section className="mx-auto mt-8 max-w-2xl rounded-[2rem] border border-emerald-400/20 bg-emerald-400/10 p-7 text-center">
-            <div className="text-5xl">{status === "won" ? "🎉" : "👏"}</div>
-            <h2 className="mt-3 text-3xl font-black">
-              {status === "won" ? `You won, ${player.name}!` : "Good game!"}
-            </h2>
-            <p className="mt-2 text-slate-300">
-              {status === "won"
-                ? rewarded
-                  ? `⭐ +${GAME_XP} XP earned on your first win.`
-                  : "⭐ First win recorded."
-                : "The computer won this round. Try again and look for captures."}
-            </p>
-            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-              <button onClick={resetGame} className="rounded-2xl bg-white px-6 py-3 font-black text-slate-900 transition hover:bg-yellow-300">
-                Play Again
-              </button>
-              <Link href="/games" className="rounded-2xl border border-white/10 bg-white/5 px-6 py-3 font-black transition hover:bg-white/10">
-                Back to Game Room
-              </Link>
-            </div>
-          </section>
+          <GameResultCard
+            result={status}
+            playerName={player.name}
+            gameName="Draughts"
+            xp={GAME_XP}
+            progress={gameProgress}
+            rewardClaimed={rewarded}
+            onRetry={resetGame}
+          />
+        )}
+
+        {status === "playing" && (
+          <div className="mt-8 text-center">
+            <button
+              onClick={resetGame}
+              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-slate-400 transition hover:bg-white/10 hover:text-white"
+            >
+              ↻ Restart Game
+            </button>
+          </div>
         )}
 
         <footer className="py-10 text-center text-xs text-slate-600">KIDDO • Learn more. Unlock more. Play more. ⭐</footer>
