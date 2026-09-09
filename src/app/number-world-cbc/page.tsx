@@ -58,11 +58,10 @@ export default function NumberWorldCBCPage() {
   const currentQuestion = questions[round];
   const grade = player ? getGrade(player.grade) : 1;
   const storedResults = useMemo(() => player ? getActivityResults(player.id) : [], [player, round, complete]);
-  const insights = useMemo(
-    () => getMathSkillInsights(storedResults.filter((result) => !sessionResults.some((session) => session.id === result.id))),
-    [storedResults, sessionResults]
-  );
-  const recommendation = getNextMathRecommendation(insights);
+  const historicalResults = storedResults.filter((result) => !sessionResults.some((session) => session.id === result.id));
+  const allLearningResults = [...historicalResults, ...sessionResults];
+  const insights = useMemo(() => getMathSkillInsights(allLearningResults), [historicalResults, sessionResults]);
+  const recommendation = getNextMathRecommendation(allLearningResults);
 
   function restart() {
     if (!player) return;
@@ -160,7 +159,7 @@ export default function NumberWorldCBCPage() {
               </div>
               <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-cyan-400 transition-all" style={{ width: `${progressWidth}%` }} /></div>
               <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-slate-400">
-                <span className="rounded-full bg-white/5 px-3 py-1">{currentQuestion.activityType.replace(/_/g, " ")}</span>
+                <span className="rounded-full bg-white/5 px-3 py-1">{currentQuestion.activityType?.replace(/_/g, " ")}</span>
                 <span className="rounded-full bg-white/5 px-3 py-1">Difficulty {currentQuestion.difficulty}</span>
               </div>
             </section>
