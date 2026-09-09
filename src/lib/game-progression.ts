@@ -3,7 +3,7 @@ import {
   GAME_GRADE_ENTRY_TIERS,
   GAME_TIERS,
 } from "@/content/game-progression";
-import { GameProgress, GameTierId } from "@/types/game-progress";
+import { GameProgress, GameTierId, TierStats } from "@/types/game-progress";
 
 const STORAGE_KEY = "kiddo-game-progress";
 
@@ -15,6 +15,82 @@ function getGradeNumber(grade: string) {
   const match = grade.match(/(\d+)/);
   const parsed = match ? Number(match[1]) : 1;
   return Math.min(6, Math.max(1, parsed));
+}
+
+function emptyTierStats(): TierStats {
+  return { wins: 0, losses: 0, attempts: 0, masteryScore: 0 };
+}
+
+function normalizeTierStats(
+  value: unknown
+): Partial<Record<GameTierId, TierStats>> {
+  if (!value || typeof value !== "object") return {};
+
+  const source = value as Record<string, unknown>;
+  const normalized: Partial<Record<GameTierId, TierStats>> = {};
+
+  for (const tier of GAME_TIERS) {
+    const item = source[tier.id];
+    if (!item || typeof item !== "object") continue;
+    const stats = item as Partial<TierStats>;
+    normalized[tier.id] = {
+      wins: Number(stats.wins) || 0,
+      losses: Number(stats.losses) || 0,
+      attempts: Number(stats.attempts) || 0,
+      masteryScore: Number(stats.masteryScore) || 0,
+    };
+  }
+
+  return normalized;
+}
+
+function makeEmptyProgress(
+  playerId: string,
+  gameId: string,
+  grade: string
+): GameProgress {
+  const entryTier = getGameEntryTier(gameId, grade);
+  return {
+    gameId,
+    playerId,
+    gradeEntry: getGradeNumber(grade),
+    currentTier: entryTier,
+    wins: 0,
+    losses: 0,
+    attempts: 0,
+    masteryScore: 0,
+    highestTier: entryTier,
+    tierStats: {},
+  };
+}
+
+function normalizeProgress(
+  existing: Partial<GameProgress>,
+  playerId: string,
+  gameId: string,
+  grade: string
+): GameProgress {
+  const fallback = makeEmptyProgress(playerId, gameId, grade);
+  const entryTier = getGameEntryTier(gameId, grade);
+  const minimumTierIndex = getTierIndex(entryTier);
+
+  const rawCurrent = existing.currentTier ?? entryTier;
+  const rawHighest = existing.highestTier ?? entryTier;
+  const currentIndex = Math.max(minimumTierIndex, getTierIndex(rawCurrent));
+  const highestIndex = Math.max(minimumTierIndex, getTierIndex(rawHighest));
+
+  return {
+    ...fallback,
+    ...existing,
+    gradeEntry: getGradeNumber(grade),
+    currentTier: GAME_TIERS[currentIndex]?.id ?? entryTier,
+    highestTier: GAME_TIERS[highestIndex]?.id ?? entryTier,
+    wins: Number(existing.wins) || 0,
+    losses: Number(existing.losses) || 0,
+    attempts: Number(existing.attempts) || 0,
+    masteryScore: Number(existing.masteryScore) || 0,
+    tierStats: normalizeTierStats(existing.tierStats),
+  };
 }
 
 export function getGameEntryTier(gameId: string, grade: string): GameTierId {
@@ -34,17 +110,7 @@ export function getGameProgress(
   const entryTier = getGameEntryTier(gameId, grade);
 
   if (typeof window === "undefined") {
-    return {
-      gameId,
-      playerId,
-      gradeEntry: getGradeNumber(grade),
-      currentTier: entryTier,
-      wins: 0,
-      losses: 0,
-      attempts: 0,
-      masteryScore: 0,
-      highestTier: entryTier,
-    };
+    return makeEmptyProgress(playerId, gameId, grade);
   }
 
   const all = readProgress();
@@ -52,66 +118,77 @@ export function getGameProgress(
     (item) => item.playerId === playerId && item.gameId === gameId
   );
 
-  if (!existing) {
-    return {
-      gameId,
-      playerId,
-      gradeEntry: getGradeNumber(grade),
-      currentTier: entryTier,
-      wins: 0,
-      losses: 0,
-      attempts: 0,
-      masteryScore: 0,
-      highestTier: entryTier,
+  if (!existing) return makeEmptyProgress(playerId, gameId, grade);
+
+  const normalized = normalizeProgress(existing, playerId, gameId, grade);
+
+  // V1 progress stored only aggregate wins. Preserve the unlocked tier while
+  // initializing the new per-tier performance ledger from the current tier.
+  if (Object.keys(normalized.tierStats).length === 0 && normalized.attempts > 0) {
+    normalized.tierStats[normalized.currentTier] = {
+      wins: normalized.wins,
+      losses: normalized.losses,
+      attempts: normalized.attempts,
+      masteryScore: normalized.masteryScore,
     };
   }
 
-  const minimumTierIndex = getTierIndex(entryTier);
-  const currentTierIndex = Math.max(
-    minimumTierIndex,
-    getTierIndex(existing.currentTier)
-  );
-  const highestTierIndex = Math.max(
-    minimumTierIndex,
-    getTierIndex(existing.highestTier)
-  );
-
-  return {
-    ...existing,
-    gradeEntry: getGradeNumber(grade),
-    currentTier: GAME_TIERS[currentTierIndex]?.id ?? entryTier,
-    highestTier: GAME_TIERS[highestTierIndex]?.id ?? entryTier,
-  };
+  return { ...normalized, gradeEntry: getGradeNumber(grade), gameId, playerId, entryTier } as GameProgress & { entryTier?: GameTierId };
 }
 
 export function recordGameResult(
   playerId: string,
   gameId: string,
   grade: string,
-  result: "won" | "lost"
+  result: "won" | "lost",
+  performanceScore?: number
 ): GameProgress {
   const progress = getGameProgress(playerId, gameId, grade);
+  const tier = GAME_TIERS[getTierIndex(progress.currentTier)];
+  const score = Math.min(100, Math.max(0, Math.round(
+    performanceScore ?? (result === "won" ? 100 : 0)
+  )));
+
+  const previousTierStats = progress.tierStats[progress.currentTier] ?? emptyTierStats();
+  const tierWins = previousTierStats.wins + (result === "won" ? 1 : 0);
+  const tierLosses = previousTierStats.losses + (result === "lost" ? 1 : 0);
+  const tierAttempts = tierWins + tierLosses;
+  const tierMastery = tierAttempts === 0
+    ? 0
+    : Math.round(((previousTierStats.masteryScore * previousTierStats.attempts) + score) / tierAttempts);
+
+  const tierStats = {
+    ...progress.tierStats,
+    [progress.currentTier]: {
+      wins: tierWins,
+      losses: tierLosses,
+      attempts: tierAttempts,
+      masteryScore: tierMastery,
+    },
+  };
+
   const wins = progress.wins + (result === "won" ? 1 : 0);
   const losses = progress.losses + (result === "lost" ? 1 : 0);
   const attempts = wins + losses;
+  const masteryScore = attempts === 0
+    ? 0
+    : Math.round(((progress.masteryScore * progress.attempts) + score) / attempts);
 
-  const entryTier = getGameEntryTier(gameId, grade);
-  const entryTierIndex = getTierIndex(entryTier);
-  let unlockedIndex = entryTierIndex;
+  let currentTier = progress.currentTier;
+  let highestTier = progress.highestTier;
+  const currentIndex = getTierIndex(currentTier);
+  const nextTier = GAME_TIERS[currentIndex + 1];
 
-  for (let index = 0; index < GAME_TIERS.length; index += 1) {
-    if (wins >= GAME_TIERS[index].unlockWins) {
-      unlockedIndex = Math.max(unlockedIndex, index);
-    }
+  if (
+    nextTier &&
+    tierWins >= nextTier.unlockWins &&
+    tierMastery >= nextTier.masteryRequired
+  ) {
+    currentTier = nextTier.id;
+    highestTier = getTierIndex(highestTier) >= currentIndex + 1
+      ? highestTier
+      : nextTier.id;
   }
-
-  const currentTier = GAME_TIERS[unlockedIndex]?.id ?? entryTier;
-  const highestIndex = Math.max(
-    getTierIndex(progress.highestTier),
-    unlockedIndex
-  );
-  const highestTier = GAME_TIERS[highestIndex]?.id ?? currentTier;
-  const masteryScore = attempts === 0 ? 0 : Math.round((wins / attempts) * 100);
 
   const next: GameProgress = {
     gameId,
@@ -123,6 +200,7 @@ export function recordGameResult(
     attempts,
     masteryScore,
     highestTier,
+    tierStats,
   };
 
   writeProgress(
