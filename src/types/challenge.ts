@@ -15,33 +15,21 @@ import {
  */
 export type Challenge = {
   id: string;
-
-  /** Subject this challenge belongs to. */
   subject: Subject;
-
-  /** School grade this challenge targets. */
   grade: Grade;
-
-  /** Learning skill being practiced. */
   skill: Skill;
-
-  /** Present for English vocabulary challenges; not applicable to other subjects. */
   partOfSpeech?: PartOfSpeech;
-
-  /** Human-readable challenge prompt. */
   prompt: string;
-
-  /** Available answer choices. */
   options: QuestionOption[];
-
-  /** Must match the id of one entry in `options`. */
   correctOptionId: string;
-
-  /** Explanation shown after the learner answers. */
   explanation: string;
-
-  /** XP earned for a correct answer on first attempt. */
   xp: number;
-
   difficulty?: 1 | 2 | 3;
+
+  /** Optional curriculum coordinates used by KIDDO's learning-intelligence layer. */
+  curriculumId?: string;
+  strand?: string;
+  subStrand?: string;
+  concept?: string;
+  activityType?: string;
 };
