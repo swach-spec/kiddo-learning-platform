@@ -35,7 +35,7 @@ export default function MemoryMatchPage() {
   useEffect(() => {
     const current = getCurrentPlayer();
     if (!current) { window.location.href = "/players"; return; }
-    const alreadyPlayed = getActivityResults(current.id).some((result) => result.activityType === "memory_match" && result.activityId === GAME_ID);
+    const alreadyPlayed = getActivityResults(current.id).some((result) => result.activityType === "memory_match" && result.activityId === GAME_ID && result.xpAwarded > 0);
     setPlayer(current);
     setRewarded(alreadyPlayed);
     setGameProgress(getGameProgress(current.id, GAME_ID, current.grade));
@@ -69,7 +69,8 @@ export default function MemoryMatchPage() {
   function finishGame() {
     if (!player || !gameProgress || completed) return;
     setCompleted(true);
-    const nextProgress = recordGameResult(player.id, GAME_ID, player.grade, "won");
+    const performance = Math.max(60, Math.min(100, 100 - Math.max(0, moves - PAIRS.length) * 5));
+    const nextProgress = recordGameResult(player.id, GAME_ID, player.grade, "won", performance);
     setGameProgress(nextProgress);
     if (rewarded) return;
     awardXP(player.id, GAME_XP);
@@ -80,6 +81,7 @@ export default function MemoryMatchPage() {
   if (!player || !gameProgress) return null;
   const tiers = getGameTiers();
   const nextTier = getNextGameTier(gameProgress);
+  const currentTierStats = gameProgress.tierStats[gameProgress.currentTier];
 
   return (
     <main className="kiddo-game-screen min-h-screen bg-slate-950 text-white">
@@ -98,7 +100,7 @@ export default function MemoryMatchPage() {
         <section className="kiddo-progression-panel mx-auto mt-6 max-w-3xl rounded-3xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center justify-between gap-4">
             <div><p className="text-xs font-bold uppercase tracking-widest text-slate-500">Game Level</p><p className="mt-1 text-2xl font-black capitalize text-cyan-300">{gameProgress.currentTier}</p></div>
-            <div className="text-right"><p className="text-xs text-slate-500">{gameProgress.wins} wins • {gameProgress.masteryScore}% mastery</p><p className="mt-1 text-sm font-bold text-slate-300">{nextTier ? `Win ${Math.max(0, nextTier.unlockWins - gameProgress.wins)} more to reach ${nextTier.name}` : "Master level reached!"}</p></div>
+            <div className="text-right"><p className="text-xs text-slate-500">{gameProgress.wins} wins • {gameProgress.masteryScore}% overall mastery</p><p className="mt-1 text-sm font-bold text-slate-300">{nextTier ? `${currentTierStats?.wins ?? 0}/${nextTier.unlockWins} wins • ${currentTierStats?.masteryScore ?? 0}%/${nextTier.masteryRequired}% mastery` : "Master level reached!"}</p></div>
           </div>
           <div className="kiddo-tier-list mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">
             {tiers.map((tier) => { const currentIndex = tiers.findIndex((item) => item.id === gameProgress.currentTier); const tierIndex = tiers.findIndex((item) => item.id === tier.id); const unlocked = currentIndex >= tierIndex; return <div key={tier.id} className={`rounded-xl px-2 py-2 text-center text-xs font-black capitalize ${unlocked ? "bg-emerald-400/15 text-emerald-300" : "bg-white/5 text-slate-600"}`}>{unlocked ? "✓ " : "🔒 "}{tier.name}</div>; })}
