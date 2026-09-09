@@ -65,34 +65,53 @@ main:has(.kiddo-progression-panel) > div > section:first-of-type p:last-child {
   font-size: 0.8rem;
 }
 
-/* Progression panel: keep the game ladder visible without consuming the screen. */
+/* Shared width: keep the information panels visually aligned with the game canvas. */
+main:has(.kiddo-progression-panel) .kiddo-progression-panel,
+main:has(.kiddo-progression-panel) .kiddo-game-stats {
+  width: min(100%, 48rem) !important;
+  max-width: 48rem !important;
+  box-sizing: border-box;
+}
+
+/* Progression panel: compact enough to leave the actual game room. */
 main:has(.kiddo-progression-panel) .kiddo-progression-panel {
-  margin-top: 0.5rem !important;
-  padding: 0.6rem !important;
+  margin-top: 0.45rem !important;
+  padding: 0.55rem 0.65rem !important;
   flex: 0 0 auto;
 }
 
 main:has(.kiddo-progression-panel) .kiddo-progression-panel .kiddo-tier-list {
-  margin-top: 0.45rem !important;
+  margin-top: 0.35rem !important;
+  gap: 0.35rem !important;
 }
 
 main:has(.kiddo-progression-panel) .kiddo-progression-panel .kiddo-tier-list > div {
-  padding-top: 0.35rem !important;
-  padding-bottom: 0.35rem !important;
+  padding-top: 0.3rem !important;
+  padding-bottom: 0.3rem !important;
+  line-height: 1.1 !important;
 }
 
 /* Stats panel. */
 main:has(.kiddo-progression-panel) > div > section:nth-of-type(3) {
-  margin-top: 0.5rem !important;
-  padding: 0.55rem 0.8rem !important;
+  margin-top: 0.4rem !important;
+  padding: 0.45rem 0.7rem !important;
   flex: 0 0 auto;
 }
 
-/* The fourth section is the actual play area in both current games. */
+main:has(.kiddo-progression-panel) > div > section:nth-of-type(3) p {
+  line-height: 1.05 !important;
+}
+
+main:has(.kiddo-progression-panel) > div > section:nth-of-type(3) p.text-2xl {
+  font-size: 1.35rem !important;
+}
+
+/* The fourth section is the actual play area in all current games. */
 main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) {
   flex: 1 1 auto;
   min-height: 0;
-  margin-top: 0.5rem !important;
+  margin-top: 0.4rem !important;
+  overflow: hidden;
 }
 
 /* Memory Match card grid. */
@@ -111,10 +130,22 @@ main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid but
   padding: 0.35rem !important;
 }
 
-/* Draughts board: keep the entire square visible without clipping. */
+/* Draughts: reserve a square canvas that cannot collide with the panels above it. */
+main:has(.kiddo-checkers-board) > div > section:nth-of-type(4) {
+  align-items: center;
+  justify-content: flex-start;
+}
+
+main:has(.kiddo-checkers-board) .kiddo-game-stage {
+  width: min(100%, 40rem) !important;
+  max-width: 40rem !important;
+  padding: 0.45rem !important;
+  box-sizing: border-box;
+}
+
 main:has(.kiddo-checkers-board) .kiddo-checkers-board {
-  width: min(100%, calc(100dvh - 21rem));
-  max-width: 40rem;
+  width: min(100%, calc(100dvh - 20rem)) !important;
+  max-width: 40rem !important;
   height: auto;
   aspect-ratio: 1;
   flex: 0 0 auto;
@@ -125,11 +156,60 @@ main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid.gri
   padding: 0 !important;
 }
 
+/* Word Builder: the play card must stay inside the remaining viewport instead of overflowing upward. */
+main:has(.kiddo-progression-panel):not(:has(.kiddo-checkers-board)) > div > section:nth-of-type(4) > div:not(.grid) {
+  width: min(100%, 48rem) !important;
+  max-width: 48rem !important;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0.9rem !important;
+}
+
+main:has(.kiddo-progression-panel):not(:has(.kiddo-checkers-board)) > div > section:nth-of-type(4) > div:not(.grid) > div:first-child p:last-child {
+  margin-top: 0.35rem !important;
+  font-size: clamp(1rem, 2vw, 1.35rem) !important;
+  line-height: 1.15 !important;
+}
+
+main:has(.kiddo-progression-panel):not(:has(.kiddo-checkers-board)) > div > section:nth-of-type(4) > div:not(.grid) > div:nth-child(2) {
+  margin-top: 0.75rem !important;
+  min-height: 2.75rem !important;
+}
+
+main:has(.kiddo-progression-panel):not(:has(.kiddo-checkers-board)) > div > section:nth-of-type(4) > div:not(.grid) > div:nth-child(2) > div {
+  height: 2.5rem !important;
+  width: 2rem !important;
+  font-size: 1.35rem !important;
+}
+
+main:has(.kiddo-progression-panel):not(:has(.kiddo-checkers-board)) > div > section:nth-of-type(4) > div:not(.grid) > div:nth-child(3) {
+  margin-top: 0.75rem !important;
+  gap: 0.35rem !important;
+}
+
+main:has(.kiddo-progression-panel):not(:has(.kiddo-checkers-board)) > div > section:nth-of-type(4) > div:not(.grid) > div:nth-child(3) button {
+  height: 2.75rem !important;
+  width: 2.75rem !important;
+  border-radius: 0.7rem !important;
+  font-size: 1.25rem !important;
+}
+
+main:has(.kiddo-progression-panel):not(:has(.kiddo-checkers-board)) > div > section:nth-of-type(4) > div:not(.grid) > div:nth-child(4) {
+  margin-top: 0.75rem !important;
+}
+
+main:has(.kiddo-progression-panel):not(:has(.kiddo-checkers-board)) > div > section:nth-of-type(4) > div:not(.grid) > div:nth-child(5) {
+  margin-top: 0.35rem !important;
+  min-height: 1.25rem !important;
+}
+
 /* Rules/help line below the Draughts board. */
 main:has(.kiddo-progression-panel) > div > p {
-  margin-top: 0.25rem !important;
-  font-size: 0.7rem !important;
-  line-height: 1.15 !important;
+  margin-top: 0.2rem !important;
+  font-size: 0.65rem !important;
+  line-height: 1.1 !important;
   flex: 0 0 auto;
 }
 
@@ -169,7 +249,7 @@ main:has(.kiddo-progression-panel) .fixed.inset-0 > section {
   }
 
   main:has(.kiddo-progression-panel) .kiddo-progression-panel {
-    padding: 0.45rem !important;
+    padding: 0.4rem !important;
   }
 
   main:has(.kiddo-progression-panel) .kiddo-progression-panel .kiddo-tier-list {
@@ -189,7 +269,11 @@ main:has(.kiddo-progression-panel) .fixed.inset-0 > section {
   }
 
   main:has(.kiddo-checkers-board) .kiddo-checkers-board {
-    width: min(100%, calc(100dvh - 16.5rem));
+    width: min(100%, calc(100dvh - 15.5rem)) !important;
+  }
+
+  main:has(.kiddo-progression-panel):not(:has(.kiddo-checkers-board)) > div > section:nth-of-type(4) > div:not(.grid) {
+    padding: 0.7rem !important;
   }
 
   main:has(.kiddo-progression-panel) .fixed.inset-0 > section {
@@ -201,29 +285,29 @@ main:has(.kiddo-progression-panel) .fixed.inset-0 > section {
 /* Short landscape screens: useful for phones held sideways and console/TV displays. */
 @media (orientation: landscape) and (max-height: 650px) {
   main:has(.kiddo-progression-panel) > div {
-    padding-top: 0.4rem !important;
-    padding-bottom: 0.4rem !important;
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
   }
 
   main:has(.kiddo-progression-panel) > div > section:first-of-type {
-    margin-top: 0.15rem !important;
+    margin-top: 0.1rem !important;
   }
 
   main:has(.kiddo-progression-panel) > div > section:first-of-type h1 {
-    font-size: 1.45rem !important;
+    font-size: 1.35rem !important;
   }
 
   main:has(.kiddo-progression-panel) .kiddo-progression-panel,
   main:has(.kiddo-progression-panel) > div > section:nth-of-type(3) {
-    margin-top: 0.25rem !important;
-    padding: 0.35rem 0.6rem !important;
+    margin-top: 0.2rem !important;
+    padding: 0.3rem 0.5rem !important;
   }
 
   main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) {
-    margin-top: 0.25rem !important;
+    margin-top: 0.2rem !important;
   }
 
   main:has(.kiddo-checkers-board) .kiddo-checkers-board {
-    width: min(100%, calc(100dvh - 11rem));
+    width: min(100%, calc(100dvh - 10rem)) !important;
   }
 }
