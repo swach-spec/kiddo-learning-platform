@@ -12,6 +12,7 @@ import { GameResultCard } from "@/components/games/GameResultCard";
 const GAME_XP = 50;
 const GAME_ID = "checkers-v1";
 type GameStatus = "playing" | "won" | "lost";
+type FinishedGameStatus = Exclude<GameStatus, "playing">;
 
 function samePosition(a: { row: number; col: number }, b: { row: number; col: number }) { return a.row === b.row && a.col === b.col; }
 function chooseComputerMove(board: CheckersBoard): CheckersMove | null {
@@ -52,7 +53,7 @@ export default function CheckersPage() {
   }, []);
 
   function resetGame() { setBoard(createInitialBoard()); setSelected(null); setLegalMoves([]); setTurn("red"); setStatus("playing"); setMoves(0); setThinking(false); }
-  function finishGame(result: GameStatus, finalMoves = moves) {
+  function finishGame(result: FinishedGameStatus, finalMoves = moves) {
     if (status !== "playing" || !player) return;
     setStatus(result);
     const nextProgress = recordGameResult(player.id, GAME_ID, player.grade, result); setGameProgress(nextProgress);
