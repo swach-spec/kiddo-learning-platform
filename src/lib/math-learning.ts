@@ -31,9 +31,10 @@ function gradeNumber(grade: Grade): number {
 export function getMathLearningContext(grade: Grade, skill: Skill): MathLearningContext {
   const config = SKILL_CONTEXT[skill] ?? SKILL_CONTEXT.problem_solving;
   const gradeValue = gradeNumber(grade);
-  const candidates = MATHEMATICS_CURRICULUM.filter(
-    (node) => node.grade === gradeValue && node.strandName === config.strand,
-  );
+  const candidates = MATHEMATICS_CURRICULUM.filter((node) => {
+    const normalized = node.strandName.toLowerCase().replace(/s$/, "");
+    return node.grade === gradeValue && normalized === config.strand.toLowerCase();
+  });
   const node = candidates.find((candidate) =>
     config.subStrandHints.some((hint) => candidate.subStrand.toLowerCase().includes(hint.toLowerCase())),
   );
