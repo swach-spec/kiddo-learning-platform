@@ -22,8 +22,21 @@ function difficultyForTier(tier: GameTierId): 1 | 2 | 3 {
   return 3;
 }
 
-function selectRandomWords(pool: WordBuilderWord[], count: number): WordBuilderWord[] {
-  return [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(count, pool.length));
+function shuffle<T>(items: T[]): T[] {
+  const result = [...items];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [result[index], result[randomIndex]] = [result[randomIndex], result[index]];
+  }
+  return result;
+}
+
+function selectRandomWords(pool: WordBuilderWord[], count: number, excludeWords: string[] = []): WordBuilderWord[] {
+  const uniquePool = Array.from(new Map(pool.map((item) => [item.word, item])).values());
+  const excluded = new Set(excludeWords);
+  const freshPool = uniquePool.filter((item) => !excluded.has(item.word));
+  const source = freshPool.length >= count ? freshPool : uniquePool;
+  return shuffle(source).slice(0, Math.min(count, source.length));
 }
 
 function getReplayPool(grade: string, tier: GameTierId): WordBuilderWord[] {
@@ -35,7 +48,7 @@ function getReplayPool(grade: string, tier: GameTierId): WordBuilderWord[] {
 function scrambleWord(word: string, round: number): LetterTile[] {
   const source = word.split("");
   let letters = [...source];
-  for (let attempt = 0; attempt < 12 && letters.join("") === word; attempt += 1) letters = [...source].sort(() => Math.random() - 0.5);
+  for (let attempt = 0; attempt < 12 && letters.join("") === word; attempt += 1) letters = shuffle(source);
   if (letters.join("") === word && letters.length > 1) [letters[0], letters[1]] = [letters[1], letters[0]];
   return letters.map((letter, index) => ({ id: `${round}-${index}-${letter}`, letter }));
 }
@@ -73,7 +86,10 @@ export default function WordBuilderPage() {
 
   function restartGame() {
     if (!player || !gameProgress) return;
-    setWords(selectRandomWords(getReplayPool(player.grade, gameProgress.currentTier), ROUNDS)); setRound(0); setSelected([]); setScore(0); setFeedback(null); setFinalResult(null); setCompleted(false);
+    const pool = getReplayPool(player.grade, gameProgress.currentTier);
+    const previousWords = words.map((word) => word.word);
+    setWords(selectRandomWords(pool, ROUNDS, previousWords));
+    setRound(0); setSelected([]); setScore(0); setFeedback(null); setFinalResult(null); setCompleted(false);
   }
 
   function chooseTile(tile: LetterTile) {
