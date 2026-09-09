@@ -1,13 +1,17 @@
 import { vocabularyChallenges } from "@/content/demo/vocabulary-challenges";
 import { mathsChallenges } from "@/content/demo/maths-challenges";
+import { numberWorldChallenges } from "@/content/number-world";
 import { ActivityResult } from "@/types/activity";
 import { Challenge } from "@/types/challenge";
 import { PartOfSpeech, Question, Skill, Story } from "@/types/content";
 
 // Single place every consumer looks a challenge up from, regardless of
-// subject — mirrors the pattern in content/index.ts (getAllStories),
-// which already concatenates per-subject arrays the same way.
-const allChallenges: Challenge[] = [...vocabularyChallenges, ...mathsChallenges];
+// subject or learning world.
+const allChallenges: Challenge[] = [
+  ...vocabularyChallenges,
+  ...mathsChallenges,
+  ...numberWorldChallenges,
+];
 
 export type LearningSignal = {
   activityResultId: string;
@@ -16,7 +20,6 @@ export type LearningSignal = {
   skill: Skill;
   correct: false;
   timestamp: string;
-  /** Only vocabulary signals with verified source metadata include these. */
   word?: string;
   partOfSpeech?: PartOfSpeech;
 };
@@ -36,11 +39,6 @@ export function getChallengeById(id: string): Challenge | undefined {
   return allChallenges.find((challenge) => challenge.id === id);
 }
 
-/**
- * Keeps skill-level signals for every incorrect story question. Vocabulary
- * detail is only attached when it is explicitly present on source content;
- * nothing is inferred or duplicated into ActivityResult.
- */
 export function getLearningSignals(
   stories: Story[],
   activityResults: ActivityResult[]
@@ -63,16 +61,8 @@ export function getLearningSignals(
         timestamp: result.timestamp,
       };
 
-      if (
-        skill === "vocabulary" &&
-        source.question.word &&
-        source.question.partOfSpeech
-      ) {
-        return {
-          ...signal,
-          word: source.question.word,
-          partOfSpeech: source.question.partOfSpeech,
-        };
+      if (skill === "vocabulary" && source.question.word && source.question.partOfSpeech) {
+        return { ...signal, word: source.question.word, partOfSpeech: source.question.partOfSpeech };
       }
 
       return signal;
@@ -80,7 +70,7 @@ export function getLearningSignals(
   });
 }
 
-/** Selects the latest compatible challenge using strict skill + POS matching. */
+/** Selects the latest compatible vocabulary challenge from an observed story weakness. */
 export function getTargetedChallenge(
   stories: Story[],
   activityResults: ActivityResult[]
@@ -89,13 +79,10 @@ export function getTargetedChallenge(
 
   for (let index = signals.length - 1; index >= 0; index -= 1) {
     const signal = signals[index];
-
     if (!signal.partOfSpeech) continue;
 
     const challenge = vocabularyChallenges.find(
-      (candidate) =>
-        candidate.skill === signal.skill &&
-        candidate.partOfSpeech === signal.partOfSpeech
+      (candidate) => candidate.skill === signal.skill && candidate.partOfSpeech === signal.partOfSpeech
     );
 
     if (challenge) return { challenge, signal };
@@ -104,37 +91,21 @@ export function getTargetedChallenge(
   return null;
 }
 
-/** Finds a compatible challenge for an already-verified source question. */
-export function getChallengeForQuestion(
-  question: Question
-): Challenge | null {
-  if (
-    !question.word ||
-    !question.partOfSpeech ||
-    !question.skills.includes("vocabulary")
-  ) {
+export function getChallengeForQuestion(question: Question): Challenge | null {
+  if (!question.word || !question.partOfSpeech || !question.skills.includes("vocabulary")) {
     return null;
   }
 
-  return (
-    vocabularyChallenges.find(
-      (challenge) =>
-        challenge.skill === "vocabulary" &&
-        challenge.partOfSpeech === question.partOfSpeech
-    ) ?? null
-  );
+  return vocabularyChallenges.find(
+    (challenge) => challenge.skill === "vocabulary" && challenge.partOfSpeech === question.partOfSpeech
+  ) ?? null;
 }
 
-function getSourceQuestion(
-  stories: Story[],
-  result: ActivityResult
-): SourceQuestion | null {
+function getSourceQuestion(stories: Story[], result: ActivityResult): SourceQuestion | null {
   if (!result.storyId) return null;
 
   const story = stories.find((candidate) => candidate.id === result.storyId);
-  const question = story?.questions.find(
-    (candidate) => candidate.id === result.activityId
-  );
+  const question = story?.questions.find((candidate) => candidate.id === result.activityId);
 
   return story && question ? { story, question } : null;
 }
