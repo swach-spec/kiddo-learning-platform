@@ -1,4 +1,8 @@
-import { GRADE_ENTRY_TIERS, GAME_TIERS } from "@/content/game-progression";
+import {
+  DEFAULT_GRADE_ENTRY_TIERS,
+  GAME_GRADE_ENTRY_TIERS,
+  GAME_TIERS,
+} from "@/content/game-progression";
 import { GameProgress, GameTierId } from "@/types/game-progress";
 
 const STORAGE_KEY = "kiddo-game-progress";
@@ -13,8 +17,13 @@ function getGradeNumber(grade: string) {
   return Math.min(6, Math.max(1, parsed));
 }
 
-export function getGameEntryTier(grade: string): GameTierId {
-  return GRADE_ENTRY_TIERS[getGradeNumber(grade)] ?? "novice";
+export function getGameEntryTier(gameId: string, grade: string): GameTierId {
+  const gradeNumber = getGradeNumber(grade);
+  return (
+    GAME_GRADE_ENTRY_TIERS[gameId]?.[gradeNumber] ??
+    DEFAULT_GRADE_ENTRY_TIERS[gradeNumber] ??
+    "novice"
+  );
 }
 
 export function getGameProgress(
@@ -22,8 +31,9 @@ export function getGameProgress(
   gameId: string,
   grade: string
 ): GameProgress {
+  const entryTier = getGameEntryTier(gameId, grade);
+
   if (typeof window === "undefined") {
-    const entryTier = getGameEntryTier(grade);
     return {
       gameId,
       playerId,
@@ -42,7 +52,6 @@ export function getGameProgress(
     (item) => item.playerId === playerId && item.gameId === gameId
   );
 
-  const entryTier = getGameEntryTier(grade);
   if (!existing) {
     return {
       gameId,
@@ -86,7 +95,7 @@ export function recordGameResult(
   const losses = progress.losses + (result === "lost" ? 1 : 0);
   const attempts = wins + losses;
 
-  const entryTier = getGameEntryTier(grade);
+  const entryTier = getGameEntryTier(gameId, grade);
   const entryTierIndex = getTierIndex(entryTier);
   let unlockedIndex = entryTierIndex;
 
