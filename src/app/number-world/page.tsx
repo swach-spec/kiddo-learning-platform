@@ -43,7 +43,6 @@ export default function NumberWorldPage() {
       window.location.href = "/players";
       return;
     }
-
     setPlayer(current);
     setQuestions(createSession(current.grade));
   }, []);
@@ -81,9 +80,7 @@ export default function NumberWorldPage() {
     setAnswerState(correct ? "correct" : "wrong");
     setAnsweredIds((current) => new Set(current).add(currentQuestion.id));
 
-    if (correct) {
-      setCorrectCount((current) => current + 1);
-    }
+    if (correct) setCorrectCount((current) => current + 1);
 
     const xpAwarded = correct && firstCompletion ? XP_PER_QUESTION : 0;
     if (xpAwarded > 0) {
@@ -118,7 +115,7 @@ export default function NumberWorldPage() {
 
   if (!player || questions.length === 0) return null;
 
-  const score = complete ? correctCount : correctCount;
+  const score = correctCount;
   const mastery = Math.round((score / questions.length) * 100);
   const topicLabel = currentQuestion?.skill.replace(/_/g, " ") ?? "maths";
 
@@ -160,7 +157,7 @@ export default function NumberWorldPage() {
               </div>
 
               <div className="mx-auto mt-8 grid max-w-2xl gap-3 sm:grid-cols-2">
-                {shuffle(currentQuestion.options).map((option, index) => {
+                {currentQuestion.options.map((option, index) => {
                   const isCorrect = selected !== null && option.id === currentQuestion.correctOptionId;
                   const isWrong = selected === option.id && !isCorrect;
                   return (
