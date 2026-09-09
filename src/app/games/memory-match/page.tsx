@@ -9,6 +9,14 @@ import {
   getCurrentPlayer,
   recordActivityResult,
 } from "@/lib/player";
+import {
+  getGameProgress,
+  getGameTiers,
+  getNextGameTier,
+  recordGameResult,
+} from "@/lib/game-progression";
+import { GameProgress } from "@/types/game-progress";
+import { GameResultCard } from "@/components/games/GameResultCard";
 
 type Card = {
   id: string;
@@ -26,6 +34,7 @@ const PAIRS = [
 ];
 
 const GAME_XP = 50;
+const GAME_ID = "memory-match-v1";
 
 function createDeck(): Card[] {
   return PAIRS.flatMap(([first, second], index) => [
@@ -51,6 +60,7 @@ export default function MemoryMatchPage() {
   const [busy, setBusy] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [rewarded, setRewarded] = useState(false);
+  const [gameProgress, setGameProgress] = useState<GameProgress | null>(null);
 
   useEffect(() => {
     const current = getCurrentPlayer();
@@ -63,11 +73,12 @@ export default function MemoryMatchPage() {
     const alreadyPlayed = getActivityResults(current.id).some(
       (result) =>
         result.activityType === "memory_match" &&
-        result.activityId === "memory-match-v1"
+        result.activityId === GAME_ID
     );
 
     setPlayer(current);
     setRewarded(alreadyPlayed);
+    setGameProgress(getGameProgress(current.id, GAME_ID, current.grade));
     setCards(createDeck());
   }, []);
 
@@ -134,9 +145,13 @@ export default function MemoryMatchPage() {
   }
 
   function finishGame() {
-    setCompleted(true);
+    if (!player || !gameProgress || completed) return;
 
-    if (!player || rewarded) {
+    setCompleted(true);
+    const nextProgress = recordGameResult(player.id, GAME_ID, player.grade, "won");
+    setGameProgress(nextProgress);
+
+    if (rewarded) {
       return;
     }
 
@@ -146,7 +161,7 @@ export default function MemoryMatchPage() {
       id: `memory-match-${player.id}-${Date.now()}`,
       playerId: player.id,
       activityType: "memory_match",
-      activityId: "memory-match-v1",
+      activityId: GAME_ID,
       skills: ["vocabulary"],
       correct: true,
       attempts: moves + 1,
@@ -158,14 +173,16 @@ export default function MemoryMatchPage() {
     setRewarded(true);
   }
 
-  if (!player) {
+  if (!player || !gameProgress) {
     return null;
   }
+
+  const tiers = getGameTiers();
+  const nextTier = getNextGameTier(gameProgress);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto min-h-screen max-w-6xl px-5 py-6 sm:px-8">
-
         <header className="flex items-center justify-between">
           <Link
             href="/games"
@@ -194,7 +211,40 @@ export default function MemoryMatchPage() {
           </p>
         </section>
 
-        <section className="mx-auto mt-8 flex max-w-3xl items-center justify-between rounded-3xl border border-white/10 bg-white/5 p-4">
+        <section className="mx-auto mt-6 max-w-3xl rounded-3xl border border-white/10 bg-white/5 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Game Level</p>
+              <p className="mt-1 text-2xl font-black capitalize text-cyan-300">{gameProgress.currentTier}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-slate-500">{gameProgress.wins} wins • {gameProgress.masteryScore}% mastery</p>
+              <p className="mt-1 text-sm font-bold text-slate-300">
+                {nextTier ? `Win ${Math.max(0, nextTier.unlockWins - gameProgress.wins)} more to reach ${nextTier.name}` : "Master level reached!"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {tiers.map((tier) => {
+              const currentIndex = tiers.findIndex((item) => item.id === gameProgress.currentTier);
+              const tierIndex = tiers.findIndex((item) => item.id === tier.id);
+              const unlocked = currentIndex >= tierIndex;
+              return (
+                <div
+                  key={tier.id}
+                  className={`rounded-xl px-2 py-2 text-center text-xs font-black capitalize ${
+                    unlocked ? "bg-emerald-400/15 text-emerald-300" : "bg-white/5 text-slate-600"
+                  }`}
+                >
+                  {unlocked ? "✓ " : "🔒 "}{tier.name}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mx-auto mt-6 flex max-w-3xl items-center justify-between rounded-3xl border border-white/10 bg-white/5 p-4">
           <div>
             <p className="text-xs text-slate-500">MOVES</p>
             <p className="text-2xl font-black">{moves}</p>
@@ -255,39 +305,15 @@ export default function MemoryMatchPage() {
         </section>
 
         {completed && (
-          <section className="mx-auto mt-8 max-w-3xl rounded-[2rem] border border-emerald-400/20 bg-emerald-400/10 p-7 text-center">
-            <div className="text-5xl">🎉</div>
-
-            <h2 className="mt-3 text-3xl font-black">
-              Great job, {player.name}!
-            </h2>
-
-            <p className="mt-2 text-slate-300">
-              You matched all the pairs in {moves} moves.
-            </p>
-
-           {rewarded ? (
-  <p className="mt-4 font-black text-yellow-400">
-    ⭐ +{GAME_XP} XP earned on your first completion
-  </p>
-) : null}
-
-            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-              <button
-                onClick={restartGame}
-                className="rounded-2xl bg-white px-6 py-3 font-black text-slate-900 transition hover:bg-yellow-300"
-              >
-                Play Again
-              </button>
-
-              <Link
-                href="/games"
-                className="rounded-2xl border border-white/10 bg-white/5 px-6 py-3 font-black transition hover:bg-white/10"
-              >
-                Back to Game Room
-              </Link>
-            </div>
-          </section>
+          <GameResultCard
+            result="won"
+            playerName={player.name}
+            gameName="Memory Match"
+            xp={GAME_XP}
+            progress={gameProgress}
+            rewardClaimed={rewarded}
+            onRetry={restartGame}
+          />
         )}
 
         {!completed && (
@@ -304,7 +330,6 @@ export default function MemoryMatchPage() {
         <footer className="py-10 text-center text-xs text-slate-600">
           KIDDO • Learn more. Unlock more. Play more. ⭐
         </footer>
-
       </div>
     </main>
   );
