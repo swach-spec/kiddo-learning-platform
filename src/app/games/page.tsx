@@ -12,6 +12,7 @@ import {
 const GAME_ROUTES: Record<string, string> = {
   "memory-match": "/games/memory-match",
   checkers: "/games/checkers",
+  "word-builder": "/games/word-builder",
 };
 
 export default function GamesPage() {
