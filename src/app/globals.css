@@ -111,12 +111,13 @@ main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid but
   padding: 0.35rem !important;
 }
 
-/* Draughts board. The board stays square and takes the largest available area. */
-main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid.grid-cols-8 {
-  width: min(100%, calc(100dvh - 20rem));
+/* Draughts board: keep the entire square visible without clipping. */
+main:has(.kiddo-checkers-board) .kiddo-checkers-board {
+  width: min(100%, calc(100dvh - 21rem));
   max-width: 40rem;
   height: auto;
   aspect-ratio: 1;
+  flex: 0 0 auto;
 }
 
 main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid.grid-cols-8 button {
@@ -187,8 +188,8 @@ main:has(.kiddo-progression-panel) .fixed.inset-0 > section {
     width: min(100%, 25rem);
   }
 
-  main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid.grid-cols-8 {
-    width: min(100%, calc(100dvh - 15.5rem));
+  main:has(.kiddo-checkers-board) .kiddo-checkers-board {
+    width: min(100%, calc(100dvh - 16.5rem));
   }
 
   main:has(.kiddo-progression-panel) .fixed.inset-0 > section {
@@ -222,7 +223,7 @@ main:has(.kiddo-progression-panel) .fixed.inset-0 > section {
     margin-top: 0.25rem !important;
   }
 
-  main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid.grid-cols-8 {
-    width: min(100%, calc(100dvh - 10rem));
+  main:has(.kiddo-checkers-board) .kiddo-checkers-board {
+    width: min(100%, calc(100dvh - 11rem));
   }
 }
