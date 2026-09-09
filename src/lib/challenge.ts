@@ -1,6 +1,7 @@
 import { vocabularyChallenges } from "@/content/demo/vocabulary-challenges";
 import { mathsChallenges } from "@/content/demo/maths-challenges";
 import { numberWorldChallenges } from "@/content/number-world";
+import { NUMBER_WORLD_CBC_BANK } from "@/content/number-world-cbc";
 import { ActivityResult } from "@/types/activity";
 import { Challenge } from "@/types/challenge";
 import { PartOfSpeech, Question, Skill, Story } from "@/types/content";
@@ -11,6 +12,7 @@ const allChallenges: Challenge[] = [
   ...vocabularyChallenges,
   ...mathsChallenges,
   ...numberWorldChallenges,
+  ...NUMBER_WORLD_CBC_BANK,
 ];
 
 export type LearningSignal = {
