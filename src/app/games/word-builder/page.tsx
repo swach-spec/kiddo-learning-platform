@@ -59,6 +59,7 @@ export default function WordBuilderPage() {
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const [completed, setCompleted] = useState(false);
+  const [finalResult, setFinalResult] = useState<"won" | "lost" | null>(null);
   const [rewarded, setRewarded] = useState(false);
 
   useEffect(() => {
@@ -70,7 +71,10 @@ export default function WordBuilderPage() {
 
     const progress = getGameProgress(current.id, GAME_ID, current.grade);
     const alreadyWon = getActivityResults(current.id).some(
-      (result) => result.activityType === "practice_challenge" && result.activityId === GAME_ID && result.xpAwarded > 0
+      (result) =>
+        result.activityType === "practice_challenge" &&
+        result.activityId === GAME_ID &&
+        result.xpAwarded > 0
     );
     const content = getWordBuilderWords(current.grade, progress.currentTier);
 
@@ -89,7 +93,10 @@ export default function WordBuilderPage() {
     setFeedback(null);
   }, [currentWord, round]);
 
-  const answer = useMemo(() => selected.map((tile) => tile.letter).join(""), [selected]);
+  const answer = useMemo(
+    () => selected.map((tile) => tile.letter).join(""),
+    [selected]
+  );
 
   function restartGame() {
     if (!player || !gameProgress) return;
@@ -99,6 +106,7 @@ export default function WordBuilderPage() {
     setSelected([]);
     setScore(0);
     setFeedback(null);
+    setFinalResult(null);
     setCompleted(false);
   }
 
@@ -133,6 +141,7 @@ export default function WordBuilderPage() {
     if (!player || !gameProgress || completed) return;
 
     setCompleted(true);
+    setFinalResult(won ? "won" : "lost");
     const result = recordGameResult(player.id, GAME_ID, player.grade, won ? "won" : "lost");
     setGameProgress(result);
 
@@ -155,7 +164,7 @@ export default function WordBuilderPage() {
     setRewarded(true);
   }
 
-  if (!player || !gameProgress || words.length < ROUNDS) return null;
+  if (!player || !gameProgress || words.length < ROUNDS || !currentWord) return null;
 
   const tiers = getGameTiers();
   const nextTier = getNextGameTier(gameProgress);
@@ -233,7 +242,7 @@ export default function WordBuilderPage() {
           </div>
         </section>
 
-        {completed && <GameResultCard result={gameProgress.wins > 0 && gameProgress.attempts > 0 && gameProgress.currentTier === gameProgress.highestTier && score >= 3 ? "won" : "lost"} playerName={player.name} gameName="Word Builder" xp={GAME_XP} progress={gameProgress} rewardClaimed={rewarded} onRetry={restartGame} />}
+        {completed && <GameResultCard result={finalResult ?? "lost"} playerName={player.name} gameName="Word Builder" xp={GAME_XP} progress={gameProgress} rewardClaimed={rewarded} onRetry={restartGame} />}
         {!completed && <div className="kiddo-restart mt-8 text-center"><button onClick={restartGame} className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-slate-400 transition hover:bg-white/10 hover:text-white">↻ Restart Game</button></div>}
         <footer className="py-10 text-center text-xs text-slate-600">KIDDO • Learn more. Unlock more. Play more. ⭐</footer>
       </div>
