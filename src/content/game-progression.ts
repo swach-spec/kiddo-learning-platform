@@ -67,4 +67,12 @@ export const GAME_GRADE_ENTRY_TIERS: Record<string, Partial<Record<number, GameT
     5: "advanced",
     6: "expert",
   },
+  "word-builder-v1": {
+    1: "novice",
+    2: "novice",
+    3: "easy",
+    4: "intermediate",
+    5: "advanced",
+    6: "expert",
+  },
 };
