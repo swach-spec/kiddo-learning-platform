@@ -184,7 +184,7 @@ main:has(.kiddo-progression-panel) .fixed.inset-0 > section {
     font-size: 0.8rem;
   }
 
-  main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid:not(.grid-cols-8) {
+  main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid:not(.kiddo-checkers-board) {
     width: min(100%, 25rem);
   }
 
