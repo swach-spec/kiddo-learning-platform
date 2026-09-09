@@ -1,4 +1,4 @@
-import { GameTier } from "@/types/game-progress";
+import { GameTier, GameTierId } from "@/types/game-progress";
 
 export const GAME_TIERS: GameTier[] = [
   {
@@ -39,11 +39,32 @@ export const GAME_TIERS: GameTier[] = [
   },
 ];
 
-export const GRADE_ENTRY_TIERS: Record<number, GameTier["id"]> = {
+// Default educational entry point. Individual games can override this when
+// their rules/content need a different starting challenge for a grade.
+export const DEFAULT_GRADE_ENTRY_TIERS: Record<number, GameTierId> = {
   1: "novice",
   2: "novice",
   3: "easy",
   4: "intermediate",
   5: "advanced",
   6: "expert",
+};
+
+export const GAME_GRADE_ENTRY_TIERS: Record<string, Partial<Record<number, GameTierId>>> = {
+  "memory-match-v1": {
+    1: "novice",
+    2: "novice",
+    3: "easy",
+    4: "intermediate",
+    5: "advanced",
+    6: "expert",
+  },
+  "checkers-v1": {
+    1: "novice",
+    2: "novice",
+    3: "easy",
+    4: "intermediate",
+    5: "advanced",
+    6: "expert",
+  },
 };
