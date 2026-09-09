@@ -25,213 +25,204 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* KIDDO game shell: use the available viewport instead of creating a long page. */
-.kiddo-game-screen {
+/* KIDDO game screens use the viewport as the game canvas. */
+main:has(.kiddo-progression-panel) {
   height: 100dvh;
   min-height: 100dvh;
   overflow: hidden;
 }
 
-.kiddo-game-screen > div {
+main:has(.kiddo-progression-panel) > div {
   height: 100%;
   min-height: 0;
   padding-top: 0.75rem !important;
   padding-bottom: 0.75rem !important;
+  display: flex;
+  flex-direction: column;
 }
 
-.kiddo-game-screen > div > header {
+main:has(.kiddo-progression-panel) > div > header {
   flex: 0 0 auto;
 }
 
-.kiddo-game-screen > div > footer {
+main:has(.kiddo-progression-panel) > div > footer {
   display: none;
 }
 
-.kiddo-game-screen .kiddo-game-title {
+/* Compact game title. */
+main:has(.kiddo-progression-panel) > div > section:first-of-type {
   margin-top: 0.5rem !important;
+  flex: 0 0 auto;
 }
 
-.kiddo-game-screen .kiddo-game-title h1 {
+main:has(.kiddo-progression-panel) > div > section:first-of-type h1 {
   font-size: clamp(1.5rem, 3.2vw, 2.75rem) !important;
   line-height: 1 !important;
 }
 
-.kiddo-game-screen .kiddo-game-title p:last-child {
+main:has(.kiddo-progression-panel) > div > section:first-of-type p:last-child {
   margin-top: 0.25rem !important;
   font-size: 0.8rem;
 }
 
-/* Memory Match: reserve the remaining viewport for the cards. */
-.kiddo-memory-screen .kiddo-progression-panel {
+/* Progression panel: keep the game ladder visible without consuming the screen. */
+main:has(.kiddo-progression-panel) .kiddo-progression-panel {
   margin-top: 0.5rem !important;
   padding: 0.6rem !important;
+  flex: 0 0 auto;
 }
 
-.kiddo-memory-screen .kiddo-progression-panel .kiddo-tier-list {
+main:has(.kiddo-progression-panel) .kiddo-progression-panel .kiddo-tier-list {
   margin-top: 0.45rem !important;
 }
 
-.kiddo-memory-screen .kiddo-progression-panel .kiddo-tier-list > div {
+main:has(.kiddo-progression-panel) .kiddo-progression-panel .kiddo-tier-list > div {
   padding-top: 0.35rem !important;
   padding-bottom: 0.35rem !important;
 }
 
-.kiddo-memory-screen .kiddo-stats-panel {
+/* Stats panel. */
+main:has(.kiddo-progression-panel) > div > section:nth-of-type(3) {
   margin-top: 0.5rem !important;
-  padding: 0.6rem 0.8rem !important;
+  padding: 0.55rem 0.8rem !important;
+  flex: 0 0 auto;
 }
 
-.kiddo-memory-screen .kiddo-cards-panel {
+/* The fourth section is the actual play area in both current games. */
+main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) {
   flex: 1 1 auto;
   min-height: 0;
   margin-top: 0.5rem !important;
-  padding: 0 !important;
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
 }
 
-.kiddo-memory-screen .kiddo-cards-grid {
-  width: min(100%, 42rem);
+/* Memory Match card grid. */
+main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid {
   height: 100%;
   min-height: 0;
+  width: min(100%, 42rem);
+  margin-left: auto;
+  margin-right: auto;
   grid-auto-rows: minmax(0, 1fr);
 }
 
-.kiddo-memory-screen .kiddo-cards-grid button {
+main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid button {
   min-height: 0;
   aspect-ratio: auto !important;
   padding: 0.35rem !important;
 }
 
-.kiddo-memory-screen .kiddo-restart {
-  display: none;
-}
-
-/* Draughts: the board gets the largest share of the viewport. */
-.kiddo-draughts-screen .kiddo-progression-panel {
-  margin-top: 0.5rem !important;
-  padding: 0.6rem !important;
-}
-
-.kiddo-draughts-screen .kiddo-progression-panel .kiddo-tier-list {
-  margin-top: 0.45rem !important;
-}
-
-.kiddo-draughts-screen .kiddo-progression-panel .kiddo-tier-list > div {
-  padding-top: 0.35rem !important;
-  padding-bottom: 0.35rem !important;
-}
-
-.kiddo-draughts-screen .kiddo-stats-panel {
-  margin-top: 0.5rem !important;
-  padding: 0.55rem 0.8rem !important;
-}
-
-.kiddo-draughts-screen .kiddo-board-panel {
-  flex: 1 1 auto;
-  min-height: 0;
-  margin-top: 0.5rem !important;
-  padding: 0.35rem !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.kiddo-draughts-screen .kiddo-board {
+/* Draughts board. The board stays square and takes the largest available area. */
+main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid.grid-cols-8 {
   width: min(100%, calc(100dvh - 20rem));
   max-width: 40rem;
-  max-height: 100%;
+  height: auto;
   aspect-ratio: 1;
 }
 
-.kiddo-draughts-screen .kiddo-rules {
+main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid.grid-cols-8 button {
+  aspect-ratio: 1 !important;
+  padding: 0 !important;
+}
+
+/* Rules/help line below the Draughts board. */
+main:has(.kiddo-progression-panel) > div > p {
   margin-top: 0.25rem !important;
   font-size: 0.7rem !important;
   line-height: 1.15 !important;
+  flex: 0 0 auto;
 }
 
-.kiddo-draughts-screen .kiddo-restart {
+/* Restart controls are redundant once the screen has a dedicated result/retry flow. */
+main:has(.kiddo-progression-panel) > div > div.mt-8 {
   display: none;
 }
 
-/* Small phones: collapse secondary progression detail while keeping the game usable. */
+/* Result overlay must fit small screens without becoming another scrolling page. */
+main:has(.kiddo-progression-panel) .fixed.inset-0 {
+  padding: 0.75rem !important;
+}
+
+main:has(.kiddo-progression-panel) .fixed.inset-0 > section {
+  max-height: calc(100dvh - 1.5rem);
+  overflow: hidden;
+  padding: clamp(1rem, 3vw, 2.5rem) !important;
+}
+
+/* Small phones. */
 @media (max-width: 640px) {
-  .kiddo-game-screen > div {
+  main:has(.kiddo-progression-panel) > div {
     padding-left: 0.65rem !important;
     padding-right: 0.65rem !important;
   }
 
-  .kiddo-game-screen .kiddo-game-title p:first-child {
+  main:has(.kiddo-progression-panel) > div > section:first-of-type p:first-child {
     display: none;
   }
 
-  .kiddo-game-screen .kiddo-game-title {
+  main:has(.kiddo-progression-panel) > div > section:first-of-type {
     margin-top: 0.25rem !important;
   }
 
-  .kiddo-game-screen .kiddo-game-title h1 {
+  main:has(.kiddo-progression-panel) > div > section:first-of-type h1 {
     font-size: 1.55rem !important;
   }
 
-  .kiddo-memory-screen .kiddo-progression-panel,
-  .kiddo-draughts-screen .kiddo-progression-panel {
+  main:has(.kiddo-progression-panel) .kiddo-progression-panel {
     padding: 0.45rem !important;
   }
 
-  .kiddo-memory-screen .kiddo-progression-panel .kiddo-tier-list,
-  .kiddo-draughts-screen .kiddo-progression-panel .kiddo-tier-list {
+  main:has(.kiddo-progression-panel) .kiddo-progression-panel .kiddo-tier-list {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 
-  .kiddo-memory-screen .kiddo-progression-panel .kiddo-tier-list > div:nth-child(n + 4),
-  .kiddo-draughts-screen .kiddo-progression-panel .kiddo-tier-list > div:nth-child(n + 4) {
+  main:has(.kiddo-progression-panel) .kiddo-progression-panel .kiddo-tier-list > div:nth-child(n + 4) {
     display: none;
   }
 
-  .kiddo-memory-screen .kiddo-stats-panel,
-  .kiddo-draughts-screen .kiddo-stats-panel {
+  main:has(.kiddo-progression-panel) > div > section:nth-of-type(3) {
     font-size: 0.8rem;
   }
 
-  .kiddo-memory-screen .kiddo-cards-grid {
+  main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid:not(.grid-cols-8) {
     width: min(100%, 25rem);
   }
 
-  .kiddo-draughts-screen .kiddo-board {
+  main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid.grid-cols-8 {
     width: min(100%, calc(100dvh - 15.5rem));
+  }
+
+  main:has(.kiddo-progression-panel) .fixed.inset-0 > section {
+    border-radius: 1.5rem;
+    padding: 1rem !important;
   }
 }
 
-/* Very short landscape screens, including many console/TV layouts. */
+/* Short landscape screens: useful for phones held sideways and console/TV displays. */
 @media (orientation: landscape) and (max-height: 650px) {
-  .kiddo-game-screen > div {
+  main:has(.kiddo-progression-panel) > div {
     padding-top: 0.4rem !important;
     padding-bottom: 0.4rem !important;
   }
 
-  .kiddo-game-screen .kiddo-game-title {
+  main:has(.kiddo-progression-panel) > div > section:first-of-type {
     margin-top: 0.15rem !important;
   }
 
-  .kiddo-game-screen .kiddo-game-title h1 {
+  main:has(.kiddo-progression-panel) > div > section:first-of-type h1 {
     font-size: 1.45rem !important;
   }
 
-  .kiddo-memory-screen .kiddo-progression-panel,
-  .kiddo-draughts-screen .kiddo-progression-panel,
-  .kiddo-memory-screen .kiddo-stats-panel,
-  .kiddo-draughts-screen .kiddo-stats-panel {
+  main:has(.kiddo-progression-panel) .kiddo-progression-panel,
+  main:has(.kiddo-progression-panel) > div > section:nth-of-type(3) {
     margin-top: 0.25rem !important;
     padding: 0.35rem 0.6rem !important;
   }
 
-  .kiddo-memory-screen .kiddo-cards-panel,
-  .kiddo-draughts-screen .kiddo-board-panel {
+  main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) {
     margin-top: 0.25rem !important;
   }
 
-  .kiddo-draughts-screen .kiddo-board {
+  main:has(.kiddo-progression-panel) > div > section:nth-of-type(4) > div.grid.grid-cols-8 {
     width: min(100%, calc(100dvh - 10rem));
   }
 }
