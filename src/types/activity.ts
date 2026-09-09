@@ -11,12 +11,14 @@ export type ActivityResult = {
   id: string;
   playerId: string;
   activityType: ActivityType;
-  /** id of the story, question, or other content item attempted. */
   activityId: string;
-  /** id of the parent story, when activityId refers to a question. */
   storyId?: string;
   skills: Skill[];
-  /** null for non-graded activities (e.g. finishing a reading page). */
+  curriculumId?: string;
+  strand?: string;
+  subStrand?: string;
+  concept?: string;
+  responseTimeMs?: number;
   correct: boolean | null;
   attempts: number;
   hintsUsed: number;
