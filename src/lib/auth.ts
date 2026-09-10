@@ -6,8 +6,18 @@ export type KiddoAccount = {
   createdAt: string;
 };
 
-const ACCOUNT_KEY = "kiddo-account";
+const ACCOUNTS_KEY = "kiddo-accounts";
+const LEGACY_ACCOUNT_KEY = "kiddo-account";
 const SESSION_KEY = "kiddo-session";
+
+export const DEMO_ACCOUNT_ID = "account-kiddo-demo";
+export const DEMO_ACCOUNT: KiddoAccount = {
+  id: DEMO_ACCOUNT_ID,
+  familyName: "KIDDO Demo Family",
+  email: "demo@kiddo.local",
+  pin: "1234",
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
 
 function isBrowser() {
   return typeof window !== "undefined";
@@ -29,37 +39,54 @@ function write<T>(key: string, value: T) {
   if (isBrowser()) window.localStorage.setItem(key, JSON.stringify(value));
 }
 
-export function getAccount(): KiddoAccount | null {
-  return read<KiddoAccount>(ACCOUNT_KEY);
+function getAccounts(): KiddoAccount[] {
+  const stored = read<KiddoAccount[]>(ACCOUNTS_KEY);
+  if (stored?.length) return stored;
+
+  const legacy = read<KiddoAccount>(LEGACY_ACCOUNT_KEY);
+  const accounts = legacy ? [legacy, DEMO_ACCOUNT] : [DEMO_ACCOUNT];
+  write(ACCOUNTS_KEY, accounts);
+  return accounts;
 }
 
-export function createAccount(familyName: string, email: string, pin: string): KiddoAccount {
+export function getAccount(): KiddoAccount | null {
+  const session = read<{ accountId: string }>(SESSION_KEY);
+  if (!session?.accountId) return null;
+  return getAccounts().find((account) => account.id === session.accountId) ?? null;
+}
+
+export function createAccount(familyName: string, email: string, pin: string): KiddoAccount | null {
+  const accounts = getAccounts();
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (accounts.some((account) => account.email === normalizedEmail)) return null;
+
   const account: KiddoAccount = {
     id: `account-${Date.now()}`,
     familyName: familyName.trim(),
-    email: email.trim().toLowerCase(),
+    email: normalizedEmail,
     pin,
     createdAt: new Date().toISOString(),
   };
 
-  write(ACCOUNT_KEY, account);
+  write(ACCOUNTS_KEY, [...accounts, account]);
   write(SESSION_KEY, { accountId: account.id });
   return account;
 }
 
 export function login(email: string, pin: string): boolean {
-  const account = getAccount();
-  if (!account) return false;
+  const account = getAccounts().find(
+    (candidate) =>
+      candidate.email === email.trim().toLowerCase() && candidate.pin === pin,
+  );
 
-  const valid = account.email === email.trim().toLowerCase() && account.pin === pin;
-  if (valid) write(SESSION_KEY, { accountId: account.id });
-  return valid;
+  if (!account) return false;
+  write(SESSION_KEY, { accountId: account.id });
+  return true;
 }
 
 export function isLoggedIn(): boolean {
-  const account = getAccount();
-  const session = read<{ accountId: string }>(SESSION_KEY);
-  return Boolean(account && session?.accountId === account.id);
+  return Boolean(getAccount());
 }
 
 export function logout() {
