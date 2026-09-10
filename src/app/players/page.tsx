@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Player } from "@/lib/kiddo";
 import { getPlayers, setCurrentPlayer } from "@/lib/player";
 import { getAccount, isLoggedIn, logout } from "@/lib/auth";
@@ -28,7 +28,6 @@ function createExplorer(name: string, grade: string, avatar: string): Player {
 
 export default function PlayersPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [players, setPlayers] = useState<Player[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
@@ -42,10 +41,13 @@ export default function PlayersPage() {
       router.replace("/login");
       return;
     }
+
     setPlayers(getPlayers());
     setFamilyName(getAccount()?.familyName ?? "");
-    if (searchParams.get("welcome")) setShowCreate(true);
-  }, [router, searchParams]);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("welcome")) setShowCreate(true);
+  }, [router]);
 
   function selectPlayer(player: Player) {
     setCurrentPlayer(player);
