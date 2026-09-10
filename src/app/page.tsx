@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Player } from "@/lib/kiddo";
 import { getCurrentPlayer, getActivityResults } from "@/lib/player";
+import { isLoggedIn } from "@/lib/auth";
 import { getAllStories } from "@/content";
 import { getTodaysAdventure } from "@/lib/adventure";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -16,6 +17,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoggedIn()) {
+      window.location.href = "/login";
+      return;
+    }
+
     const current = getCurrentPlayer();
     if (!current) {
       window.location.href = "/players";
@@ -78,7 +84,7 @@ export default function Home() {
       color: "from-blue-400 to-cyan-600",
       progress: numberWorldProgress,
       unlocked: true,
-      href: "/number-world",
+      href: "/number-world-cbc",
     },
   ];
 
