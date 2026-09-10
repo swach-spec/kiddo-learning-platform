@@ -5,12 +5,13 @@ import { lionAndMouse } from "./lion-and-mouse";
 import { secretGarden } from "./secret-garden";
 import { expandedLowerPrimaryStories } from "./expanded-stories";
 import { benchmarkStories } from "./benchmark-stories";
+import { calibrateStoryLanguage } from "./story-language-calibration";
 
 export const lowerPrimaryEnglishStories: Story[] = [
   lostKite,
   cleverTortoise,
   lionAndMouse,
   secretGarden,
-  ...expandedLowerPrimaryStories,
+  ...calibrateStoryLanguage(expandedLowerPrimaryStories),
   ...benchmarkStories,
 ];
