@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Challenge } from "@/types/challenge";
 
 export type MathAnswerState = "correct" | "wrong" | null;
@@ -34,6 +34,10 @@ export default function MathActivityCard({ question, selected, answerState, onAn
   const mode = ACTIVITY_LABELS[question.activityType ?? "quick_question"] ?? ACTIVITY_LABELS.quick_question;
   const objects = useMemo(() => extractCountObjects(question.prompt), [question.prompt]);
   const [counted, setCounted] = useState<number[]>([]);
+
+  useEffect(() => {
+    setCounted([]);
+  }, [question.id]);
 
   function tapObject(index: number) {
     if (selected !== null) return;
@@ -76,10 +80,10 @@ export default function MathActivityCard({ question, selected, answerState, onAn
                     type="button"
                     onClick={() => tapObject(index)}
                     aria-label={`Count object ${index + 1}`}
-                    className={`flex h-16 w-16 items-center justify-center rounded-2xl border text-4xl transition duration-150 ${wasCounted ? "scale-95 border-emerald-400 bg-emerald-400/15" : "border-white/10 bg-white/5 hover:-translate-y-1 hover:border-cyan-300/50"}`}
+                    className={`relative flex h-16 w-16 items-center justify-center rounded-2xl border text-4xl transition duration-150 ${wasCounted ? "scale-95 border-emerald-400 bg-emerald-400/15" : "border-white/10 bg-white/5 hover:-translate-y-1 hover:border-cyan-300/50"}`}
                   >
                     {object}
-                    {wasCounted && <span className="absolute text-sm font-black text-emerald-300">✓</span>}
+                    {wasCounted && <span className="absolute right-1 top-1 text-sm font-black text-emerald-300">✓</span>}
                   </button>
                 );
               })}
