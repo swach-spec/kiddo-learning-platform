@@ -11,6 +11,7 @@ export type Grade = 1 | 2 | 3 | 4 | 5 | 6;
 export type GradeBand =
   | "kindergarten"
   | "lower_primary"
+  | "upper_primary"
   | "grade_4_5"
   | "grade_6";
 
