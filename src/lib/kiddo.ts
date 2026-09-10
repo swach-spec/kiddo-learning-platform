@@ -1,5 +1,6 @@
 export type Player = {
   id: string;
+  accountId: string;
   name: string;
   avatar: string;
   grade: string;
@@ -15,6 +16,7 @@ export type Player = {
 export const defaultPlayers: Player[] = [
   {
     id: "sam",
+    accountId: "account-kiddo-demo",
     name: "Sam",
     avatar: "🧑🏾‍🚀",
     grade: "Grade 3",
@@ -27,6 +29,7 @@ export const defaultPlayers: Player[] = [
   },
   {
     id: "jane",
+    accountId: "account-kiddo-demo",
     name: "Jane",
     avatar: "👧🏾‍🚀",
     grade: "Grade 2",
@@ -39,6 +42,7 @@ export const defaultPlayers: Player[] = [
   },
   {
     id: "trevor",
+    accountId: "account-kiddo-demo",
     name: "Trevor",
     avatar: "👦🏾‍🚀",
     grade: "Grade 1",
@@ -51,14 +55,6 @@ export const defaultPlayers: Player[] = [
   },
 ];
 
-// NOTE (Phase 1.1): getLevelFromXP(1240) actually returns 5, not Sam's
-// stored level of 4 — this discrepancy exists in the original HEAD data
-// too (level was authored as a literal, not derived). Phase 1.1
-// deliberately leaves these seed values untouched rather than "fixing"
-// them, per the instruction not to alter existing learner state without
-// explicit approval. Level is treated as persisted state that this
-// formula recalculates prospectively when XP changes (see
-// lib/player.ts#awardXP) — never retroactively on read.
 export function getLevelFromXP(xp: number) {
   return Math.floor(xp / 300) + 1;
 }
@@ -66,13 +62,11 @@ export function getLevelFromXP(xp: number) {
 export function getXPIntoLevel(xp: number) {
   const level = getLevelFromXP(xp);
   const previousLevelXP = (level - 1) * 300;
-
   return xp - previousLevelXP;
 }
 
 export function getXPForNextLevel(xp: number) {
   const level = getLevelFromXP(xp);
-
   return level * 300;
 }
 
@@ -80,10 +74,5 @@ export function getLevelProgress(xp: number) {
   const level = getLevelFromXP(xp);
   const previousLevelXP = (level - 1) * 300;
   const nextLevelXP = level * 300;
-
-  return (
-    ((xp - previousLevelXP) /
-      (nextLevelXP - previousLevelXP)) *
-    100
-  );
+  return ((xp - previousLevelXP) / (nextLevelXP - previousLevelXP)) * 100;
 }
