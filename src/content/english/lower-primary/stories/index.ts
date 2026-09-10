@@ -4,6 +4,7 @@ import { cleverTortoise } from "./clever-tortoise";
 import { lionAndMouse } from "./lion-and-mouse";
 import { secretGarden } from "./secret-garden";
 import { expandedLowerPrimaryStories } from "./expanded-stories";
+import { benchmarkStories } from "./benchmark-stories";
 
 export const lowerPrimaryEnglishStories: Story[] = [
   lostKite,
@@ -11,4 +12,5 @@ export const lowerPrimaryEnglishStories: Story[] = [
   lionAndMouse,
   secretGarden,
   ...expandedLowerPrimaryStories,
+  ...benchmarkStories,
 ];
