@@ -11,9 +11,10 @@ import { WordHelper } from "@/components/WordHelper";
 const AVATARS = ["🧑🏾‍🚀", "👧🏾‍🚀", "👦🏾‍🚀", "🧒🏾‍🚀", "🦸🏾‍♂️", "🦸🏾‍♀️", "🧙🏾‍♂️", "🧙🏾‍♀️"];
 const GRADES = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"];
 
-function createExplorer(name: string, grade: string, avatar: string): Player {
+function createExplorer(name: string, grade: string, avatar: string, accountId: string): Player {
   return {
     id: `player-${Date.now()}`,
+    accountId,
     name: name.trim(),
     avatar,
     grade,
@@ -61,10 +62,17 @@ export default function PlayersPage() {
       return;
     }
 
-    const explorer = createExplorer(name, grade, avatar);
-    const nextPlayers = [...players, explorer];
+    const account = getAccount();
+    if (!account) {
+      router.replace("/login");
+      return;
+    }
+
+    const explorer = createExplorer(name, grade, avatar, account.id);
+    const allPlayers = JSON.parse(window.localStorage.getItem("kiddo-players") ?? "[]") as Player[];
+    const nextPlayers = [...allPlayers, explorer];
     window.localStorage.setItem("kiddo-players", JSON.stringify(nextPlayers));
-    setPlayers(nextPlayers);
+    setPlayers(getPlayers());
     setName("");
     setShowCreate(false);
     selectPlayer(explorer);
