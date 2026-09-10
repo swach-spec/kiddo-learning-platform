@@ -30,7 +30,9 @@ export default function StoryForest() {
     return null;
   }
 
-  const stories = getAllStories();
+  const allStories = getAllStories();
+  const playerGrade = Number.parseInt(player.grade.replace(/\D/g, ""), 10);
+  const stories = allStories.filter((story) => story.grade === playerGrade);
 
   return (
     <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
@@ -42,7 +44,6 @@ export default function StoryForest() {
       </div>
 
       <div className="relative mx-auto min-h-screen max-w-7xl px-5 py-6 sm:px-8">
-
         {/* Header */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -110,11 +111,10 @@ export default function StoryForest() {
 
         {/* Story list */}
         <section className="mt-10">
-
           <div className="mb-5 flex items-end justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-widest text-emerald-400">
-                Choose your adventure
+                Grade {playerGrade} adventures
               </p>
 
               <h2 className="mt-1 text-3xl font-black">
@@ -123,24 +123,33 @@ export default function StoryForest() {
             </div>
 
             <div className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-400 sm:block">
-              ⭐ {stories.length} stories available
+              ⭐ {stories.length} stories for your grade
             </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {stories.map((story) => (
-              <StoryCard
-                key={story.id}
-                story={story}
-                unlocked={player.level >= story.unlocksAtLevel}
-              />
-            ))}
-          </div>
+          {stories.length > 0 ? (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {stories.map((story) => (
+                <StoryCard
+                  key={story.id}
+                  story={story}
+                  unlocked={player.level >= story.unlocksAtLevel}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
+              <p className="text-4xl">🌱</p>
+              <h3 className="mt-3 text-xl font-black">More stories are growing!</h3>
+              <p className="mt-2 text-slate-400">
+                New Grade {playerGrade} adventures are coming soon.
+              </p>
+            </div>
+          )}
         </section>
 
         {/* Reading stats */}
         <section className="mt-10 grid gap-4 sm:grid-cols-3">
-
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <p className="text-sm text-slate-400">
               Stories Completed
@@ -170,7 +179,6 @@ export default function StoryForest() {
               {player.xp.toLocaleString()} ⭐
             </p>
           </div>
-
         </section>
 
         <WordHelper className="mt-8" />
@@ -178,7 +186,6 @@ export default function StoryForest() {
         <footer className="py-10 text-center text-xs text-slate-600">
           🌳 Every story is a new adventure.
         </footer>
-
       </div>
     </main>
   );
