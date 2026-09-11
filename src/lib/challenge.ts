@@ -36,7 +36,7 @@ type SourceQuestion = {
   question: Question;
 };
 
-/** Looks up any challenge by id, regardless of subject. */
+/** Looks up any challenge by id, regardless of subject or learning world. */
 export function getChallengeById(id: string): Challenge | undefined {
   return allChallenges.find((challenge) => challenge.id === id);
 }
@@ -72,7 +72,12 @@ export function getLearningSignals(
   });
 }
 
-/** Selects the latest compatible vocabulary challenge from an observed story weakness. */
+/**
+ * Selects a vocabulary challenge from an observed weakness. If no weakness
+ * exists yet, it falls back to the first compatible vocabulary question in
+ * the learner's current story so the journey always has a meaningful
+ * practice step after learning.
+ */
 export function getTargetedChallenge(
   stories: Story[],
   activityResults: ActivityResult[]
@@ -90,7 +95,34 @@ export function getTargetedChallenge(
     if (challenge) return { challenge, signal };
   }
 
-  return null;
+  const readyStory = stories.find((story) => story.status === "ready");
+  const fallbackQuestion = readyStory?.questions.find(
+    (question) => question.word && question.partOfSpeech && question.skills.includes("vocabulary")
+  );
+
+  if (!readyStory || !fallbackQuestion?.word || !fallbackQuestion.partOfSpeech) {
+    return null;
+  }
+
+  const challenge = vocabularyChallenges.find(
+    (candidate) => candidate.skill === "vocabulary" && candidate.partOfSpeech === fallbackQuestion.partOfSpeech
+  );
+
+  if (!challenge) return null;
+
+  return {
+    challenge,
+    signal: {
+      activityResultId: "story-start",
+      activityId: fallbackQuestion.id,
+      storyId: readyStory.id,
+      skill: "vocabulary",
+      correct: false,
+      timestamp: new Date().toISOString(),
+      word: fallbackQuestion.word,
+      partOfSpeech: fallbackQuestion.partOfSpeech,
+    },
+  };
 }
 
 export function getChallengeForQuestion(question: Question): Challenge | null {
