@@ -1,6 +1,7 @@
 import { Skill } from "@/types/content";
 
 export type ActivityType =
+  | "lesson"
   | "story_reading"
   | "story_question"
   | "practice_challenge"
