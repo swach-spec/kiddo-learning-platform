@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Player } from "@/lib/kiddo";
 import { Story } from "@/types/content";
 import { ActivityResult } from "@/types/activity";
-import { getTargetedChallenge } from "@/lib/challenge";
+import { getChallengeById } from "@/lib/challenge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 
 type Props = {
@@ -11,15 +11,30 @@ type Props = {
   activityResults: ActivityResult[];
 };
 
-export function LearningJourney({ player, stories, activityResults }: Props) {
-  const readyStory = stories.find((story) => story.status === "ready");
-  const storyDone = readyStory ? player.completedStoryIds.includes(readyStory.id) : false;
-  const targeted = getTargetedChallenge(stories, activityResults);
-  const challengeReady = storyDone && Boolean(targeted);
+const LESSON_ID_BY_GRADE: Record<string, string> = {
+  "Grade 1": "english-g1-describing-words",
+  "Grade 2": "english-g2-describing-words",
+  "Grade 3": "english-g3-describing-words",
+  "Grade 4": "english-g4-adjectives",
+  "Grade 5": "english-g5-adjectives",
+  "Grade 6": "english-g6-adjectives",
+};
+
+const PRACTICE_ID = "demo-adjective-describing-word";
+
+export function LearningJourney({ player, stories: _stories, activityResults }: Props) {
+  const lessonId = LESSON_ID_BY_GRADE[player.grade] ?? LESSON_ID_BY_GRADE["Grade 2"];
+  const lessonDone = activityResults.some(
+    (result) => result.activityType === "lesson" && result.activityId === lessonId
+  );
+  const practice = getChallengeById(PRACTICE_ID);
+  const practiceDone = activityResults.some(
+    (result) => result.activityType === "practice_challenge" && result.activityId === PRACTICE_ID
+  );
   const gamesUnlocked = player.level >= 2;
 
-  const completed = [storyDone, challengeReady, gamesUnlocked].filter(Boolean).length;
-  const progress = Math.round((completed / 3) * 100);
+  const completed = [lessonDone, practiceDone, practiceDone, gamesUnlocked].filter(Boolean).length;
+  const progress = Math.round((completed / 4) * 100);
 
   return (
     <section className="mt-8 overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900/80 shadow-2xl">
@@ -43,38 +58,52 @@ export function LearningJourney({ player, stories, activityResults }: Props) {
       </div>
 
       <div className="p-5 sm:p-8">
-        <div className="grid gap-0 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-stretch">
+        <div className="grid gap-0 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-stretch">
           <JourneyNode
             number="01"
             icon="📚"
             eyebrow="LEARN"
-            title={readyStory?.title ?? "Your next lesson"}
-            description={readyStory ? `Read, listen and discover ${readyStory.title}.` : "A new lesson is coming soon."}
-            state={storyDone ? "done" : readyStory ? "current" : "locked"}
-            href={readyStory ? `/story/${readyStory.id}` : undefined}
-            action={storyDone ? "Review lesson" : "Start learning"}
+            title="Describing Words"
+            description="Learn the idea first with examples and a guided activity."
+            state={lessonDone ? "done" : "current"}
+            href="/learn/adjectives"
+            action={lessonDone ? "Review lesson" : "Start learning"}
           />
-          <Connector done={storyDone} />
+          <Connector done={lessonDone} />
+
           <JourneyNode
             number="02"
             icon="🧠"
             eyebrow="PRACTISE"
-            title={targeted ? `${targeted.signal.partOfSpeech} Challenge` : "Practice what you learned"}
-            description={targeted ? `Use what you learned about ${targeted.signal.word ?? "words"}.` : "Practice activities will appear here as your learning journey grows."}
-            state={challengeReady ? "current" : "locked"}
-            href={targeted ? `/challenge/${targeted.challenge.id}` : undefined}
+            title={practice ? "Word Challenge" : "Practice"}
+            description="Use the skill you just learned in a short challenge."
+            state={practiceDone ? "done" : lessonDone ? "current" : "locked"}
+            href={practice ? `/challenge/${practice.id}` : undefined}
             action="Try it"
           />
-          <Connector done={challengeReady} />
+          <Connector done={practiceDone} />
+
           <JourneyNode
             number="03"
             icon="⭐"
-            eyebrow="PLAY & MASTER"
-            title="Earn your next unlock"
-            description={gamesUnlocked ? "Your Game Room is ready. Keep learning to unlock more." : "Master your learning and unlock your first games."}
+            eyebrow="MASTER"
+            title="Show what you know"
+            description={practiceDone ? "You completed your first practice step. Keep building mastery." : "Complete practice to move this step forward."}
+            state={practiceDone ? "current" : "locked"}
+            href={practiceDone ? "/" : undefined}
+            action="See progress"
+          />
+          <Connector done={gamesUnlocked} />
+
+          <JourneyNode
+            number="04"
+            icon="🎮"
+            eyebrow="PLAY"
+            title="Game Room"
+            description={gamesUnlocked ? "Play games you have unlocked and keep earning XP." : "Reach Level 2 to unlock your first games."}
             state={gamesUnlocked ? "current" : "locked"}
             href={gamesUnlocked ? "/games" : undefined}
-            action={gamesUnlocked ? "Play Game Room" : "Keep learning"}
+            action={gamesUnlocked ? "Play Game Room" : "🔒 Level 2"}
           />
         </div>
 
@@ -84,7 +113,7 @@ export function LearningJourney({ player, stories, activityResults }: Props) {
             <div>
               <p className="font-black">KIDDO tip</p>
               <p className="mt-1 text-sm leading-6 text-slate-400">
-                Learn first. Then practise. Every step helps you become better before you move to the next adventure.
+                You do not need to choose everything. Follow the glowing step and KIDDO will guide you forward.
               </p>
             </div>
           </div>
@@ -130,7 +159,7 @@ function JourneyNode({
       <p className="mt-2 min-h-12 text-sm leading-6 text-slate-400">{description}</p>
       <div className="mt-5 flex items-center justify-between gap-3">
         <span className={`text-sm font-bold ${state === "done" ? "text-emerald-300" : state === "current" ? "text-white" : "text-slate-600"}`}>
-          {state === "done" ? "✓ Complete" : state === "locked" ? "🔒 Not yet" : action}
+          {state === "done" ? "✓ Complete" : state === "locked" ? action : action}
         </span>
         {state === "current" && href && <span className="text-lg">→</span>}
       </div>
