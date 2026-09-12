@@ -26,7 +26,6 @@ export default function ChallengePage() {
 
   if (loading || !player) return null;
   const challenge = session.challenges[index];
-
   if (!challenge) return <main className="flex min-h-screen items-center justify-center bg-slate-950 px-5 text-white"><div className="text-center"><div className="text-6xl">🧭</div><h1 className="mt-6 text-3xl font-black">Challenge not found</h1><Link href="/" className="mt-8 inline-block"><Button variant="primary">Back Home</Button></Link></div></main>;
 
   const answered = selectedOptionId !== null;
@@ -38,25 +37,16 @@ export default function ChallengePage() {
     const isCorrect = optionId === challenge.correctOptionId;
     setSelectedOptionId(optionId);
     if (isCorrect) setScore((value) => value + 1);
-    recordActivityResult({
-      id: crypto.randomUUID(), playerId: player.id, activityType: "practice_challenge", activityId: challenge.id,
-      skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand,
-      concept: challenge.concept, correct: isCorrect, attempts: 1, hintsUsed: 0, difficulty: challenge.difficulty,
-      xpAwarded: isCorrect ? challenge.xp : 0, timestamp: new Date().toISOString(),
-    });
+    recordActivityResult({ id: crypto.randomUUID(), playerId: player.id, activityType: "practice_challenge", activityId: challenge.id, skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand, concept: challenge.concept, correct: isCorrect, attempts: 1, hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: isCorrect ? challenge.xp : 0, timestamp: new Date().toISOString() });
     if (isCorrect) awardXP(challenge.xp);
   }
 
   function finishSession(finalScore: number) {
     if (sessionRecorded) return;
     const existing = getActivityResults(player.id).some((result) => result.activityId === session.completionActivityId && result.correct === true);
-    if (!existing) recordActivityResult({
-      id: crypto.randomUUID(), playerId: player.id, activityType: "practice_challenge", activityId: session.completionActivityId,
-      skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand,
-      concept: challenge.concept, correct: finalScore / session.challenges.length >= 0.7, attempts: session.challenges.length,
-      hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: 0, timestamp: new Date().toISOString(),
-    });
+    if (!existing) recordActivityResult({ id: crypto.randomUUID(), playerId: player.id, activityType: "practice_challenge", activityId: session.completionActivityId, skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand, concept: challenge.concept, correct: finalScore / session.challenges.length >= 0.7, attempts: session.challenges.length, hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: 0, timestamp: new Date().toISOString() });
     setSessionRecorded(true);
+    setScore(finalScore);
     setFinished(true);
   }
 
