@@ -1,5 +1,3 @@
-import { getActivityResults } from "@/lib/player";
-
 const BALANCE_KEY = "kiddo-activity-balance";
 const HOME_PROMPT_LIMIT = 2;
 const COMPLETION_LIMIT_BEFORE_RECOMMENDATION = 2;
@@ -66,9 +64,9 @@ export function getActivityHomePromptCount(activityId: string): number {
 
 /**
  * Home can deliberately surface a completed activity again. After two such
- * prompts, the activity is temporarily restricted until another activity is
- * completed. This creates healthy interleaving without making the child feel
- * punished for liking one activity.
+ * prompts, the activity becomes temporarily restricted. Completing another
+ * activity is the signal that the learner has tried something else; the next
+ * balance cycle can then recommend the original activity again.
  */
 export function shouldPromptActivity(activityId: string): boolean {
   const state = readState();
@@ -87,8 +85,7 @@ export function isActivityRestricted(activityId: string): boolean {
   const state = readState();
   return (
     (state.completions[activityId] ?? 0) >= COMPLETION_LIMIT_BEFORE_RECOMMENDATION &&
-    (state.homePrompts[activityId] ?? 0) >= HOME_PROMPT_LIMIT &&
-    state.lastCompletedActivityId !== activityId
+    (state.homePrompts[activityId] ?? 0) >= HOME_PROMPT_LIMIT
   );
 }
 
@@ -96,18 +93,20 @@ export function getBalancedActivityIds(activityIds: string[]): string[] {
   return activityIds.filter((activityId) => !isActivityRestricted(activityId));
 }
 
-export function getNextActivityRecommendation(playerId: string): BalancedActivityRecommendation | null {
-  const knownIds = new Set(getActivityResults(playerId).map((result) => result.activityId));
-  return RECOMMENDABLE_ACTIVITIES.find(
-    (activity) => knownIds.has(activity.activityId) && shouldPromptActivity(activity.activityId)
-  ) ?? null;
+export function getNextActivityRecommendation(_playerId: string): BalancedActivityRecommendation | null {
+  return RECOMMENDABLE_ACTIVITIES.find((activity) => shouldPromptActivity(activity.activityId)) ?? null;
 }
 
-/**
- * Legacy localStorage results remain useful while the repository layer is
- * being adopted. This helper is intentionally read-only and does not infer
- * completion from question-level evidence.
- */
 export function getKnownActivityIds(playerId: string): string[] {
-  return [...new Set(getActivityResults(playerId).map((result) => result.activityId))];
+  // Kept as a compatibility helper for callers that still need the legacy
+  // activity-result list. Balance decisions themselves use completion state.
+  if (!isBrowser()) return [];
+  try {
+    const raw = window.localStorage.getItem("kiddo-activity-results");
+    if (!raw) return [];
+    const results = JSON.parse(raw) as Array<{ playerId?: string; activityId?: string }>;
+    return [...new Set(results.filter((result) => result.playerId === playerId && result.activityId).map((result) => result.activityId as string))];
+  } catch {
+    return [];
+  }
 }
