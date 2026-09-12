@@ -2,17 +2,19 @@ import { vocabularyChallenges } from "@/content/demo/vocabulary-challenges";
 import { mathsChallenges } from "@/content/demo/maths-challenges";
 import { numberWorldChallenges } from "@/content/number-world";
 import { NUMBER_WORLD_CBC_BANK } from "@/content/number-world-cbc";
+import { grade2DescribingGuided, grade2DescribingIndependent, grade2SentenceBuilder } from "@/content/challenges/grade-2-english";
 import { ActivityResult } from "@/types/activity";
 import { Challenge } from "@/types/challenge";
 import { PartOfSpeech, Question, Skill, Story } from "@/types/content";
 
-// Single place every consumer looks a challenge up from, regardless of
-// subject or learning world.
 const allChallenges: Challenge[] = [
   ...vocabularyChallenges,
   ...mathsChallenges,
   ...numberWorldChallenges,
   ...NUMBER_WORLD_CBC_BANK,
+  ...grade2DescribingGuided,
+  ...grade2DescribingIndependent,
+  ...grade2SentenceBuilder,
 ];
 
 export type LearningSignal = {
@@ -31,85 +33,59 @@ export type TargetedChallenge = {
   signal: LearningSignal;
 };
 
-type SourceQuestion = {
-  story: Story;
-  question: Question;
-};
+type SourceQuestion = { story: Story; question: Question };
 
-/** Looks up any challenge by id, regardless of subject or learning world. */
 export function getChallengeById(id: string): Challenge | undefined {
   return allChallenges.find((challenge) => challenge.id === id);
 }
 
-export function getLearningSignals(
-  stories: Story[],
-  activityResults: ActivityResult[]
-): LearningSignal[] {
-  return activityResults.flatMap((result) => {
-    if (result.activityType !== "story_question" || result.correct !== false) {
-      return [];
-    }
+export function getChallengeSession(id: string): Challenge[] {
+  if (id.startsWith("g2-guided-")) return grade2DescribingGuided;
+  if (id.startsWith("g2-independent-")) return grade2DescribingIndependent;
+  if (id.startsWith("g2-sentence-")) return grade2SentenceBuilder;
+  const challenge = getChallengeById(id);
+  return challenge ? [challenge] : [];
+}
 
+export function getLearningSignals(stories: Story[], activityResults: ActivityResult[]): LearningSignal[] {
+  return activityResults.flatMap((result) => {
+    if (result.activityType !== "story_question" || result.correct !== false) return [];
     const source = getSourceQuestion(stories, result);
     if (!source) return [];
-
-    return source.question.skills.map((skill): LearningSignal => {
-      const signal: LearningSignal = {
-        activityResultId: result.id,
-        activityId: result.activityId,
-        storyId: source.story.id,
-        skill,
-        correct: false,
-        timestamp: result.timestamp,
-      };
-
-      if (skill === "vocabulary" && source.question.word && source.question.partOfSpeech) {
-        return { ...signal, word: source.question.word, partOfSpeech: source.question.partOfSpeech };
-      }
-
-      return signal;
-    });
+    return source.question.skills.map((skill): LearningSignal => ({
+      activityResultId: result.id,
+      activityId: result.activityId,
+      storyId: source.story.id,
+      skill,
+      correct: false,
+      timestamp: result.timestamp,
+      ...(skill === "vocabulary" && source.question.word && source.question.partOfSpeech
+        ? { word: source.question.word, partOfSpeech: source.question.partOfSpeech }
+        : {}),
+    }));
   });
 }
 
-/**
- * Selects a vocabulary challenge from an observed weakness. If no weakness
- * exists yet, it falls back to the first compatible vocabulary question in
- * the learner's current story so the journey always has a meaningful
- * practice step after learning.
- */
-export function getTargetedChallenge(
-  stories: Story[],
-  activityResults: ActivityResult[]
-): TargetedChallenge | null {
+export function getTargetedChallenge(stories: Story[], activityResults: ActivityResult[]): TargetedChallenge | null {
   const signals = getLearningSignals(stories, activityResults);
-
   for (let index = signals.length - 1; index >= 0; index -= 1) {
     const signal = signals[index];
     if (!signal.partOfSpeech) continue;
-
     const challenge = vocabularyChallenges.find(
-      (candidate) => candidate.skill === signal.skill && candidate.partOfSpeech === signal.partOfSpeech
+      (candidate) => candidate.skill === signal.skill && candidate.partOfSpeech === signal.partOfSpeech,
     );
-
     if (challenge) return { challenge, signal };
   }
 
   const readyStory = stories.find((story) => story.status === "ready");
   const fallbackQuestion = readyStory?.questions.find(
-    (question) => question.word && question.partOfSpeech && question.skills.includes("vocabulary")
+    (question) => question.word && question.partOfSpeech && question.skills.includes("vocabulary"),
   );
-
-  if (!readyStory || !fallbackQuestion?.word || !fallbackQuestion.partOfSpeech) {
-    return null;
-  }
-
+  if (!readyStory || !fallbackQuestion?.word || !fallbackQuestion.partOfSpeech) return null;
   const challenge = vocabularyChallenges.find(
-    (candidate) => candidate.skill === "vocabulary" && candidate.partOfSpeech === fallbackQuestion.partOfSpeech
+    (candidate) => candidate.skill === "vocabulary" && candidate.partOfSpeech === fallbackQuestion.partOfSpeech,
   );
-
   if (!challenge) return null;
-
   return {
     challenge,
     signal: {
@@ -126,20 +102,15 @@ export function getTargetedChallenge(
 }
 
 export function getChallengeForQuestion(question: Question): Challenge | null {
-  if (!question.word || !question.partOfSpeech || !question.skills.includes("vocabulary")) {
-    return null;
-  }
-
+  if (!question.word || !question.partOfSpeech || !question.skills.includes("vocabulary")) return null;
   return vocabularyChallenges.find(
-    (challenge) => challenge.skill === "vocabulary" && challenge.partOfSpeech === question.partOfSpeech
+    (challenge) => challenge.skill === "vocabulary" && challenge.partOfSpeech === question.partOfSpeech,
   ) ?? null;
 }
 
 function getSourceQuestion(stories: Story[], result: ActivityResult): SourceQuestion | null {
   if (!result.storyId) return null;
-
   const story = stories.find((candidate) => candidate.id === result.storyId);
   const question = story?.questions.find((candidate) => candidate.id === result.activityId);
-
   return story && question ? { story, question } : null;
 }
