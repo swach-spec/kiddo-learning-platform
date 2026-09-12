@@ -4,17 +4,24 @@ import { getSkillSnapshot } from "@/lib/adaptive-learning";
 import { getEnglishPath } from "@/content/curriculum/english-path";
 
 function nodeEvidence(results: ActivityResult[], node: CurriculumNode) {
-  return results.filter(
-    (r) => r.curriculumId === node.curriculumId || r.activityId === node.activityId
-  );
+  return results.filter((r) => r.curriculumId === node.curriculumId || r.activityId === node.activityId);
 }
 
 export function isNodeComplete(results: ActivityResult[], node: CurriculumNode): boolean {
   const evidence = nodeEvidence(results, node);
   if (!evidence.length) return false;
-  if (node.kind === "lesson") return evidence.some((r) => r.correct === true);
-  const accuracy = evidence.filter((r) => r.correct === true).length / evidence.length;
-  return evidence.length >= 2 && accuracy >= 0.7;
+
+  // A curriculum step is complete only when its actual completion marker is
+  // written. Individual correct answers are evidence, not completion.
+  if (node.kind === "story") {
+    return evidence.some((r) => r.activityType === "story_reading" && r.activityId === node.activityId);
+  }
+
+  if (node.kind === "lesson") {
+    return evidence.some((r) => r.activityType === "lesson" && r.activityId === node.id && r.xpAwarded > 0);
+  }
+
+  return evidence.some((r) => r.activityType === "lesson" && r.activityId === node.id && r.xpAwarded > 0);
 }
 
 export function getPathProgress(results: ActivityResult[], path: CurriculumNode[]) {
@@ -37,29 +44,19 @@ export function getNextLearningDecision(results: ActivityResult[], grade: number
   const snapshot = getSkillSnapshot(results, skill);
 
   if (evidence.length && (snapshot.state === "needs_support" || snapshot.accuracy < 0.6)) {
-    return {
-      node,
-      route: "remediation",
-      action: "support",
-      reason: "Your recent work shows that this idea needs another supported attempt before you move on.",
-    };
+    return { node, route: "remediation", action: "support", reason: "Your recent work shows that this idea needs another supported attempt before you move on." };
   }
 
   if (node.kind === "lesson") {
     return { node, route: "main", action: "learn", reason: "This is the next required idea on your grade pathway." };
   }
 
-  if (snapshot.state === "secure" && snapshot.accuracy >= 0.9 && snapshot.hints === 0) {
-    return {
-      node,
-      route: "acceleration",
-      action: "challenge",
-      reason: "You are showing strong understanding, so KIDDO can reduce repetition and give you a stronger task.",
-    };
-  }
-
   if (node.kind === "mastery") {
     return { node, route: "mastery", action: "challenge", reason: "You have reached a mastery checkpoint for this part of the pathway." };
+  }
+
+  if (snapshot.state === "secure" && snapshot.accuracy >= 0.9 && snapshot.hints === 0) {
+    return { node, route: "acceleration", action: "challenge", reason: "You are showing strong understanding, so KIDDO can reduce repetition and give you a stronger task." };
   }
 
   return { node, route: "main", action: "practise", reason: "Practise this idea, then KIDDO will use your performance to decide what comes next." };
