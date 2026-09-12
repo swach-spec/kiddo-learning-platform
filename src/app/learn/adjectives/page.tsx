@@ -7,6 +7,13 @@ import { LessonFlow } from "@/components/LessonFlow";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { usePlayer } from "@/hooks/usePlayer";
 import { getActivityResults, recordActivityResult } from "@/lib/player";
+import { Grade } from "@/types/content";
+
+function getGrade(value: string): Grade {
+  const match = value.match(/\d+/);
+  const grade = match ? Number(match[0]) : 1;
+  return Math.min(6, Math.max(1, grade)) as Grade;
+}
 
 export default function AdjectivesLessonPage() {
   const { player, loading, awardXP } = usePlayer();
@@ -20,7 +27,8 @@ export default function AdjectivesLessonPage() {
       return;
     }
 
-    const lesson = getAdjectiveLesson(player.grade as 1 | 2 | 3 | 4 | 5 | 6);
+    const grade = getGrade(player.grade);
+    const lesson = getAdjectiveLesson(grade);
     const alreadyCompleted = getActivityResults(player.id).some(
       (result) => result.activityType === "lesson" && result.activityId === lesson.id
     );
@@ -30,7 +38,7 @@ export default function AdjectivesLessonPage() {
 
   if (loading || !player) return null;
 
-  const grade = Number(player.grade.replace(/\D/g, "")) as 1 | 2 | 3 | 4 | 5 | 6;
+  const grade = getGrade(player.grade);
   const lesson = getAdjectiveLesson(grade);
 
   function completeLesson() {
