@@ -10,18 +10,27 @@ type ActivityBalanceState = {
   lastCompletedActivityId: string | null;
 };
 
+export type BalancedActivityRecommendation = {
+  activityId: string;
+  title: string;
+  description: string;
+  href: string;
+};
+
+const RECOMMENDABLE_ACTIVITIES: BalancedActivityRecommendation[] = [
+  { activityId: "memory-match-v1", title: "Memory Match", description: "Train your memory and vocabulary.", href: "/games/memory-match" },
+  { activityId: "checkers-v1", title: "Draughts", description: "Think ahead and make your next move.", href: "/games/checkers" },
+  { activityId: "word-builder-v1", title: "Word Challenge", description: "Build words and sharpen your language skills.", href: "/games/word-builder" },
+];
+
 function isBrowser() {
   return typeof window !== "undefined";
 }
 
 function readState(): ActivityBalanceState {
-  if (!isBrowser()) {
-    return { completions: {}, homePrompts: {}, lastCompletedActivityId: null };
-  }
-
+  if (!isBrowser()) return { completions: {}, homePrompts: {}, lastCompletedActivityId: null };
   const raw = window.localStorage.getItem(BALANCE_KEY);
   if (!raw) return { completions: {}, homePrompts: {}, lastCompletedActivityId: null };
-
   try {
     const parsed = JSON.parse(raw) as Partial<ActivityBalanceState>;
     return {
@@ -65,7 +74,6 @@ export function shouldPromptActivity(activityId: string): boolean {
   const state = readState();
   const completions = state.completions[activityId] ?? 0;
   const prompts = state.homePrompts[activityId] ?? 0;
-
   return completions >= COMPLETION_LIMIT_BEFORE_RECOMMENDATION && prompts < HOME_PROMPT_LIMIT;
 }
 
@@ -86,6 +94,13 @@ export function isActivityRestricted(activityId: string): boolean {
 
 export function getBalancedActivityIds(activityIds: string[]): string[] {
   return activityIds.filter((activityId) => !isActivityRestricted(activityId));
+}
+
+export function getNextActivityRecommendation(playerId: string): BalancedActivityRecommendation | null {
+  const knownIds = new Set(getActivityResults(playerId).map((result) => result.activityId));
+  return RECOMMENDABLE_ACTIVITIES.find(
+    (activity) => knownIds.has(activity.activityId) && shouldPromptActivity(activity.activityId)
+  ) ?? null;
 }
 
 /**
