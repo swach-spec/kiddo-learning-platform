@@ -2,7 +2,7 @@ import { CurriculumNode } from "@/types/curriculum-path";
 
 const grades = {
   1: { strand: "Listening and Speaking", subStrand: "Language Patterns", concepts: ["simple sentence patterns", "naming and action words", "describing words", "reading simple sentences", "guided comprehension"] },
-  2: { strand: "Reading", subStrand: "Language Patterns and Comprehension", concepts: ["describing words", "present and past actions", "reading for meaning", "sentence sequencing", "guided composition"] },
+  2: { strand: "Reading", subStrand: "Language Patterns and Comprehension", concepts: ["describing words", "describing words", "reading for meaning", "sentence sequencing", "guided composition"] },
   3: { strand: "Grammar in Use", subStrand: "Sentence Construction", concepts: ["describing words", "subject-verb agreement", "sentence patterns", "reading fluency", "comprehension and vocabulary"] },
   4: { strand: "Grammar", subStrand: "Word Classes and Sentence Structure", concepts: ["adjectives", "verb tense", "sentence structure", "conjunctions", "reading and comprehension"] },
   5: { strand: "Grammar", subStrand: "Sentence Construction", concepts: ["adjectives", "conjunctions", "complex sentences", "contextual vocabulary", "reading and inference"] },
