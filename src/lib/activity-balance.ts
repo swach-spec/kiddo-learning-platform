@@ -25,10 +25,14 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
+function emptyState(): ActivityBalanceState {
+  return { completions: {}, homePrompts: {}, lastCompletedActivityId: null };
+}
+
 function readState(): ActivityBalanceState {
-  if (!isBrowser()) return { completions: {}, homePrompts: {}, lastCompletedActivityId: null };
+  if (!isBrowser()) return emptyState();
   const raw = window.localStorage.getItem(BALANCE_KEY);
-  if (!raw) return { completions: {}, homePrompts: {}, lastCompletedActivityId: null };
+  if (!raw) return emptyState();
   try {
     const parsed = JSON.parse(raw) as Partial<ActivityBalanceState>;
     return {
@@ -37,7 +41,7 @@ function readState(): ActivityBalanceState {
       lastCompletedActivityId: parsed.lastCompletedActivityId ?? null,
     };
   } catch {
-    return { completions: {}, homePrompts: {}, lastCompletedActivityId: null };
+    return emptyState();
   }
 }
 
@@ -63,10 +67,10 @@ export function getActivityHomePromptCount(activityId: string): number {
 }
 
 /**
- * Home can deliberately surface a completed activity again. After two such
- * prompts, the activity becomes temporarily restricted. Completing another
- * activity is the signal that the learner has tried something else; the next
- * balance cycle can then recommend the original activity again.
+ * After two completions, Home may recommend the same activity twice. Once both
+ * prompts have been used, the activity is restricted until another activity
+ * is completed. Completing that other activity changes lastCompletedActivityId
+ * and explicitly releases the restricted activity.
  */
 export function shouldPromptActivity(activityId: string): boolean {
   const state = readState();
@@ -85,7 +89,8 @@ export function isActivityRestricted(activityId: string): boolean {
   const state = readState();
   return (
     (state.completions[activityId] ?? 0) >= COMPLETION_LIMIT_BEFORE_RECOMMENDATION &&
-    (state.homePrompts[activityId] ?? 0) >= HOME_PROMPT_LIMIT
+    (state.homePrompts[activityId] ?? 0) >= HOME_PROMPT_LIMIT &&
+    state.lastCompletedActivityId !== activityId
   );
 }
 
@@ -98,8 +103,6 @@ export function getNextActivityRecommendation(_playerId: string): BalancedActivi
 }
 
 export function getKnownActivityIds(playerId: string): string[] {
-  // Kept as a compatibility helper for callers that still need the legacy
-  // activity-result list. Balance decisions themselves use completion state.
   if (!isBrowser()) return [];
   try {
     const raw = window.localStorage.getItem("kiddo-activity-results");
