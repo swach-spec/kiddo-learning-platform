@@ -65,10 +65,10 @@ export default function Grade2DescribingWordsPage() {
   }
 
   function completePractice(finalScore: number) {
-    const alreadyRewarded = getActivityResults(player.id).some((r) => r.activityType === "lesson" && r.activityId === config.curriculumId && r.xpAwarded > 0);
-    if (!alreadyRewarded) { awardXP(config.xp); setEarned(config.xp); recordActivityResult({ id: crypto.randomUUID(), playerId: player.id, activityType: "lesson", activityId: config.curriculumId, curriculumId: config.curriculumId, skills: ["vocabulary", "grammar"], correct: true, attempts: config.questions.length, hintsUsed: 0, xpAwarded: config.xp, timestamp: new Date().toISOString() }); }
     setScore(finalScore);
     if (mode === "mastery") { setCompositionIndex(0); setBuiltWords([]); setCompositionDone(0); return; }
+    const alreadyRewarded = getActivityResults(player.id).some((r) => r.activityType === "lesson" && r.activityId === config.curriculumId && r.xpAwarded > 0);
+    if (!alreadyRewarded) { awardXP(config.xp); setEarned(config.xp); recordActivityResult({ id: crypto.randomUUID(), playerId: player.id, activityType: "lesson", activityId: config.curriculumId, curriculumId: config.curriculumId, skills: ["vocabulary", "grammar"], correct: true, attempts: config.questions.length, hintsUsed: 0, xpAwarded: config.xp, timestamp: new Date().toISOString() }); }
     setFinished(true);
   }
 
