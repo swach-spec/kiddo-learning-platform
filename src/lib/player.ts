@@ -10,6 +10,9 @@ import { getRepositories } from "@/data/repositories";
  */
 const repositories = getRepositories();
 
+/** Re-exported for legacy consumers while ActivityResult moves to the data layer. */
+export type { ActivityResult } from "@/types/activity";
+
 /** Returns only the explorers owned by the currently signed-in family. */
 export function getPlayers(): Player[] {
   return repositories.learners.getLearners();
