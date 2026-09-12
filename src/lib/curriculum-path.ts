@@ -3,29 +3,16 @@ import { CurriculumNode, NextLearningDecision } from "@/types/curriculum-path";
 import { getSkillSnapshot } from "@/lib/adaptive-learning";
 import { getEnglishPath } from "@/content/curriculum/english-path";
 
-function nodeEvidence(results: ActivityResult[], node: CurriculumNode) {
-  return results.filter((result) => result.activityId === node.activityId || result.activityId === node.id);
-}
-
+function nodeEvidence(results: ActivityResult[], node: CurriculumNode) { return results.filter((result) => result.activityId === node.activityId || result.activityId === node.id); }
 export function isNodeComplete(results: ActivityResult[], node: CurriculumNode): boolean {
   const evidence = nodeEvidence(results, node);
   if (!evidence.length) return false;
-  if (node.kind === "lesson" || node.kind === "story") return evidence.some((result) => result.correct === true);
-  const answered = evidence.filter((result) => typeof result.correct === "boolean");
-  if (answered.length < 1) return false;
-  return answered.some((result) => result.correct === true);
+  if (node.kind === "lesson") return evidence.some((result) => result.correct === true);
+  if (node.kind === "story") return evidence.some((result) => result.activityType === "story_reading");
+  return evidence.some((result) => result.correct === true);
 }
-
-export function getPathProgress(results: ActivityResult[], path: CurriculumNode[]) {
-  const required = path.filter((node) => node.required);
-  const completed = required.filter((node) => isNodeComplete(results, node)).length;
-  return { completed, total: required.length, percent: required.length ? Math.round((completed / required.length) * 100) : 0 };
-}
-
-export function getNextCurriculumNode(results: ActivityResult[], path: CurriculumNode[]): CurriculumNode | null {
-  return path.find((node) => !isNodeComplete(results, node)) ?? null;
-}
-
+export function getPathProgress(results: ActivityResult[], path: CurriculumNode[]) { const required = path.filter((node) => node.required); const completed = required.filter((node) => isNodeComplete(results, node)).length; return { completed, total: required.length, percent: required.length ? Math.round((completed / required.length) * 100) : 0 }; }
+export function getNextCurriculumNode(results: ActivityResult[], path: CurriculumNode[]): CurriculumNode | null { return path.find((node) => !isNodeComplete(results, node)) ?? null; }
 export function getNextLearningDecision(results: ActivityResult[], grade: number): NextLearningDecision | null {
   const node = getNextCurriculumNode(results, getEnglishPath(grade));
   if (!node) return null;
