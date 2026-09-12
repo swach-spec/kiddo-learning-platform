@@ -33,7 +33,7 @@ export default function Grade2DescribingWordsPage() {
   const config = CONFIG[mode];
   const question = config.questions[index];
   const currentComposition = grade2CompositionPrompts[compositionIndex];
-  const shuffledWords = useMemo(() => currentComposition ? [...currentComposition.words].sort(() => 0.5 - Math.random()) : [], [currentComposition]);
+  const shuffledWords = useMemo(() => currentComposition ? [...currentComposition.words].sort((a, b) => a.localeCompare(b)) : [], [currentComposition]);
 
   useEffect(() => {
     setIndex(0); setSelected(null); setScore(0); setFinished(false); setCompositionIndex(0); setBuiltWords([]); setCompositionDone(0); setEarned(0);
@@ -46,7 +46,7 @@ export default function Grade2DescribingWordsPage() {
   }
 
   function recordAnswer(correct: boolean) {
-    recordActivityResult({ id: crypto.randomUUID(), playerId: player!.id, activityType: "practice_challenge", activityId: question.id, curriculumId: config.curriculumId, skills: ["vocabulary", "grammar"], correct, attempts: 1, hintsUsed: 0, xpAwarded: 0, timestamp: new Date().toISOString() });
+    recordActivityResult({ id: crypto.randomUUID(), playerId: player.id, activityType: "practice_challenge", activityId: question.id, curriculumId: config.curriculumId, skills: ["vocabulary", "grammar"], correct, attempts: 1, hintsUsed: 0, xpAwarded: 0, timestamp: new Date().toISOString() });
   }
 
   function choose(answer: string) {
@@ -65,9 +65,11 @@ export default function Grade2DescribingWordsPage() {
   }
 
   function completePractice(finalScore: number) {
-    const alreadyRewarded = getActivityResults(player!.id).some((r) => r.activityType === "lesson" && r.activityId === config.curriculumId && r.xpAwarded > 0);
-    if (!alreadyRewarded) { awardXP(config.xp); setEarned(config.xp); recordActivityResult({ id: crypto.randomUUID(), playerId: player!.id, activityType: "lesson", activityId: config.curriculumId, curriculumId: config.curriculumId, skills: ["vocabulary", "grammar"], correct: true, attempts: config.questions.length, hintsUsed: 0, xpAwarded: config.xp, timestamp: new Date().toISOString() }); }
-    setScore(finalScore); setFinished(true);
+    const alreadyRewarded = getActivityResults(player.id).some((r) => r.activityType === "lesson" && r.activityId === config.curriculumId && r.xpAwarded > 0);
+    if (!alreadyRewarded) { awardXP(config.xp); setEarned(config.xp); recordActivityResult({ id: crypto.randomUUID(), playerId: player.id, activityType: "lesson", activityId: config.curriculumId, curriculumId: config.curriculumId, skills: ["vocabulary", "grammar"], correct: true, attempts: config.questions.length, hintsUsed: 0, xpAwarded: config.xp, timestamp: new Date().toISOString() }); }
+    setScore(finalScore);
+    if (mode === "mastery") { setCompositionIndex(0); setBuiltWords([]); setCompositionDone(0); return; }
+    setFinished(true);
   }
 
   function chooseComposition(word: string) {
@@ -75,7 +77,7 @@ export default function Grade2DescribingWordsPage() {
     const next = [...builtWords, word];
     setBuiltWords(next);
     if (next.length === currentComposition.words.length) {
-      const correct = next.every((word, i) => word === currentComposition.answer[i]);
+      const correct = next.every((value, i) => value === currentComposition.answer[i]);
       recordActivityResult({ id: crypto.randomUUID(), playerId: player.id, activityType: "practice_challenge", activityId: currentComposition.id, curriculumId: "english-g2-mastery", skills: ["grammar", "writing"], correct, attempts: 1, hintsUsed: 0, xpAwarded: 0, timestamp: new Date().toISOString() });
       if (correct) setCompositionDone((value) => value + 1);
       setTimeout(() => {
@@ -91,6 +93,7 @@ export default function Grade2DescribingWordsPage() {
       const alreadyRewarded = getActivityResults(player.id).some((r) => r.activityType === "lesson" && r.activityId === "english-g2-mastery" && r.xpAwarded > 0);
       if (!alreadyRewarded) { awardXP(60); setEarned(60); recordActivityResult({ id: crypto.randomUUID(), playerId: player.id, activityType: "lesson", activityId: "english-g2-mastery", curriculumId: "english-g2-mastery", skills: ["grammar", "writing"], correct: true, attempts: 8, hintsUsed: 0, xpAwarded: 60, timestamp: new Date().toISOString() }); }
     }
+    setCompositionDone(compositions);
     setFinished(true);
   }
 
