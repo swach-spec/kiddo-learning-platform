@@ -194,7 +194,7 @@ export default function WordBuilderPage() {
       playerId: player.id,
       activityType: "practice_challenge",
       activityId: GAME_ID,
-      skills: ["spelling", "vocabulary", "reading", "grammar"],
+      skills: ["spelling", "vocabulary", "reading_comprehension", "grammar"],
       correct: true,
       attempts: ROUNDS,
       hintsUsed,
