@@ -8,11 +8,18 @@ import {
   getPlayerUnlocks,
   getNextUnlock,
 } from "@/lib/unlocks";
+import { isActivityRestricted } from "@/lib/activity-balance";
 
 const GAME_ROUTES: Record<string, string> = {
   "memory-match": "/games/memory-match",
   checkers: "/games/checkers",
   "word-builder": "/games/word-builder",
+};
+
+const GAME_ACTIVITY_IDS: Record<string, string> = {
+  "memory-match": "memory-match-v1",
+  checkers: "checkers-v1",
+  "word-builder": "word-builder-v1",
 };
 
 export default function GamesPage() {
@@ -79,43 +86,51 @@ export default function GamesPage() {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {availableUnlocks
               .filter((unlock) => unlock.type === "game")
-              .map((unlock) => (
-                <div
-                  key={unlock.id}
-                  className={`rounded-[1.75rem] border p-6 ${
-                    unlock.unlocked ? "border-emerald-400/20 bg-white/5" : "border-white/10 bg-white/[0.025] opacity-60"
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 text-3xl">{unlock.icon}</div>
-                    {unlock.unlocked ? (
-                      <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-400">UNLOCKED</span>
+              .map((unlock) => {
+                const activityId = GAME_ACTIVITY_IDS[unlock.id];
+                const balancedOut = Boolean(activityId && isActivityRestricted(activityId));
+                return (
+                  <div
+                    key={unlock.id}
+                    className={`rounded-[1.75rem] border p-6 ${
+                      unlock.unlocked && !balancedOut ? "border-emerald-400/20 bg-white/5" : "border-white/10 bg-white/[0.025] opacity-70"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 text-3xl">{unlock.icon}</div>
+                      {balancedOut ? (
+                        <span className="rounded-full bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-300">TRY ANOTHER</span>
+                      ) : unlock.unlocked ? (
+                        <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-400">UNLOCKED</span>
+                      ) : (
+                        <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-black text-slate-500">LOCKED</span>
+                      )}
+                    </div>
+
+                    <h3 className="mt-5 text-xl font-black">{unlock.name}</h3>
+                    <p className="mt-2 min-h-12 text-sm leading-6 text-slate-400">{unlock.description}</p>
+
+                    {balancedOut ? (
+                      <div className="mt-5 rounded-2xl bg-yellow-400/5 px-4 py-3 text-sm font-bold text-yellow-200/80">You&apos;ve played this enough for now. Try another path and come back later.</div>
+                    ) : unlock.unlocked ? (
+                      GAME_ROUTES[unlock.id] ? (
+                        <Link
+                          href={GAME_ROUTES[unlock.id]}
+                          className="mt-5 block w-full rounded-2xl bg-emerald-500 px-4 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-emerald-300"
+                        >
+                          Play Game →
+                        </Link>
+                      ) : (
+                        <button disabled className="mt-5 w-full rounded-2xl bg-emerald-500/20 px-4 py-3 text-sm font-black text-emerald-300">
+                          Coming next →
+                        </button>
+                      )
                     ) : (
-                      <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-black text-slate-500">LOCKED</span>
+                      <div className="mt-5 rounded-2xl bg-black/20 px-4 py-3 text-sm font-bold text-slate-500">🔒 Reach Level {unlock.requiredLevel}</div>
                     )}
                   </div>
-
-                  <h3 className="mt-5 text-xl font-black">{unlock.name}</h3>
-                  <p className="mt-2 min-h-12 text-sm leading-6 text-slate-400">{unlock.description}</p>
-
-                  {unlock.unlocked ? (
-                    GAME_ROUTES[unlock.id] ? (
-                      <Link
-                        href={GAME_ROUTES[unlock.id]}
-                        className="mt-5 block w-full rounded-2xl bg-emerald-500 px-4 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-emerald-300"
-                      >
-                        Play Game →
-                      </Link>
-                    ) : (
-                      <button disabled className="mt-5 w-full rounded-2xl bg-emerald-500/20 px-4 py-3 text-sm font-black text-emerald-300">
-                        Coming next →
-                      </button>
-                    )
-                  ) : (
-                    <div className="mt-5 rounded-2xl bg-black/20 px-4 py-3 text-sm font-bold text-slate-500">🔒 Reach Level {unlock.requiredLevel}</div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
           </div>
         </section>
 
