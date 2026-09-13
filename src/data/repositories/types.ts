@@ -1,6 +1,28 @@
 import { Player } from "@/lib/kiddo";
 import { ActivityResult } from "@/types/activity";
 
+export type LearnerProgressState = {
+  currentSubject?: "english" | "mathematics";
+  currentCurriculumNodeId?: string;
+  currentLearningUnitId?: string;
+  currentActivityId?: string;
+  learningState?: "secure" | "developing" | "needs_support";
+  progressPercent?: number;
+  lastActivityId?: string;
+  updatedAt?: string;
+};
+
+export type ActivityProgressState = {
+  activityId: string;
+  status: "available" | "in_progress" | "completed" | "mastered" | "deprioritised";
+  completionCount: number;
+  bestScore?: number;
+  accuracy?: number;
+  firstStartedAt?: string;
+  lastStartedAt?: string;
+  lastCompletedAt?: string;
+};
+
 export type LearnerRepository = {
   getLearners(): Player[];
   getLearner(playerId: string): Player | null;
@@ -17,8 +39,10 @@ export type ActivityRepository = {
 };
 
 export type ProgressRepository = {
-  getLearnerProgress(playerId: string): Record<string, unknown> | null;
-  saveLearnerProgress(playerId: string, progress: Record<string, unknown>): void;
+  getLearnerProgress(playerId: string): LearnerProgressState | null;
+  saveLearnerProgress(playerId: string, progress: LearnerProgressState): void;
+  getActivityProgress(playerId: string, activityId: string): ActivityProgressState | null;
+  saveActivityProgress(playerId: string, progress: ActivityProgressState): void;
 };
 
 export type RevisionRepository = {
