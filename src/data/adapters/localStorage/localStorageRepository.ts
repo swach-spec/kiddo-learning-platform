@@ -9,6 +9,8 @@ import {
   LearnerRepository,
   ProgressRepository,
   RevisionRepository,
+  LearnerProgressState,
+  ActivityProgressState,
 } from "@/data/repositories/types";
 
 const PLAYERS_KEY = "kiddo-players";
@@ -133,8 +135,8 @@ const activities: ActivityRepository = {
   },
 };
 
-type StoredLearnerProgress = Record<string, unknown> & {
-  activityProgress?: Record<string, Record<string, unknown>>;
+type StoredLearnerProgress = LearnerProgressState & {
+  activityProgress?: Record<string, ActivityProgressState>;
 };
 
 const progress: ProgressRepository = {
@@ -147,28 +149,31 @@ const progress: ProgressRepository = {
     const all = readJSON<Record<string, StoredLearnerProgress>>(PROGRESS_KEY) ?? {};
     const existing = all[playerId] ?? {};
     const activityProgress = existing.activityProgress ?? {};
+    const next: StoredLearnerProgress = {
+      ...existing,
+      ...value,
+      activityProgress,
+    };
     writeJSON(PROGRESS_KEY, {
       ...all,
-      [playerId]: {
-        ...existing,
-        ...value,
-        activityProgress,
-      },
+      [playerId]: next,
     });
   },
 
   getActivityProgress(playerId, activityId) {
-    const learner = this.getLearnerProgress(playerId) as StoredLearnerProgress | null;
-    return (learner?.activityProgress?.[activityId] as never) ?? null;
+    const learner = this.getLearnerProgress(playerId);
+    return learner && "activityProgress" in learner
+      ? ((learner.activityProgress?.[activityId] as ActivityProgressState | undefined) ?? null)
+      : null;
   },
 
   saveActivityProgress(playerId, value) {
-    const learner = (this.getLearnerProgress(playerId) as StoredLearnerProgress | null) ?? {};
-    const activityProgress = learner.activityProgress ?? {};
+    const learner = this.getLearnerProgress(playerId) as StoredLearnerProgress | null;
+    const activityProgress = learner?.activityProgress ?? {};
     writeJSON(PROGRESS_KEY, {
       ...(readJSON<Record<string, StoredLearnerProgress>>(PROGRESS_KEY) ?? {}),
       [playerId]: {
-        ...learner,
+        ...(learner ?? {}),
         activityProgress: {
           ...activityProgress,
           [value.activityId]: value,
