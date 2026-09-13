@@ -7,7 +7,7 @@ import { Story } from "@/types/content";
 import { ActivityResult } from "@/types/activity";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { getEnglishPath } from "@/content/curriculum/english-path";
-import { getNextLearningDecision, getPathProgress, isNodeComplete } from "@/lib/curriculum-path";
+import { getNextLearningDecision, getNodeLearningState, getPathProgress, isNodeComplete } from "@/lib/curriculum-path";
 import { startLearningNode } from "@/lib/guided-learning";
 
 type Props = { player: Player; stories: Story[]; activityResults: ActivityResult[] };
@@ -20,12 +20,20 @@ function getNodeHref(node: ReturnType<typeof getEnglishPath>[number]) {
   return node.route;
 }
 
+function stateCopy(state: ReturnType<typeof getNodeLearningState>) {
+  if (state === "secure") return { label: "Secure", detail: "Ready to move forward" };
+  if (state === "needs_support") return { label: "Needs support", detail: "KIDDO will give extra practice" };
+  return { label: "Developing", detail: "Keep practising and KIDDO will adapt" };
+}
+
 export function LearningJourney({ player, stories, activityResults }: Props) {
   const [showPath, setShowPath] = useState(false);
   const grade = Number(player.grade.replace(/\D/g, "")) || 2;
   const path = getEnglishPath(grade);
   const progress = getPathProgress(activityResults, path);
   const decision = getNextLearningDecision(activityResults, grade);
+  const learningState = decision ? getNodeLearningState(activityResults, decision.node) : "secure";
+  const state = stateCopy(learningState);
   const gradeStories = stories.filter((story) => story.status === "ready" && story.grade === grade);
   const completedStories = gradeStories.filter((story) => player.completedStoryIds.includes(story.id)).length;
   const gamesUnlocked = player.level >= 2;
@@ -37,7 +45,7 @@ export function LearningJourney({ player, stories, activityResults }: Props) {
       <p className="mt-2 text-xs font-bold text-slate-500">{progress.completed} of {progress.total} required learning steps complete</p>
     </div>
     <div className="p-5 sm:p-8">
-      {decision && <div className="mb-5 rounded-3xl border border-cyan-400/15 bg-cyan-400/5 p-5"><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">KIDDO&apos;s next step</p><h3 className="mt-1 text-xl font-black">{decision.node.title}</h3><p className="mt-1 text-sm leading-6 text-slate-400">{decision.reason}</p></div>{decision.node.route && <Link href={getNodeHref(decision.node) ?? decision.node.route} onClick={() => startLearningNode(player.id, decision.node)} className="shrink-0 rounded-2xl bg-white px-6 py-3 text-center font-black text-slate-950 hover:bg-yellow-300">{decision.action === "learn" ? "Start Learning →" : decision.action === "support" ? "Let&apos;s practise →" : decision.action === "challenge" ? "Take Challenge →" : "Practise →"}</Link>}</div></div>}
+      {decision && <div className="mb-5 rounded-3xl border border-cyan-400/15 bg-cyan-400/5 p-5"><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex flex-wrap items-center gap-2"><p className="text-xs font-black uppercase tracking-widest text-cyan-300">KIDDO&apos;s next step</p><span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-300">{state.label}</span></div><h3 className="mt-1 text-xl font-black">{decision.node.title}</h3><p className="mt-1 text-sm leading-6 text-slate-400">{decision.reason}</p><p className="mt-2 text-xs font-bold text-slate-500">{state.detail}</p></div>{decision.node.route && <Link href={getNodeHref(decision.node) ?? decision.node.route} onClick={() => startLearningNode(player.id, decision.node)} className="shrink-0 rounded-2xl bg-white px-6 py-3 text-center font-black text-slate-950 hover:bg-yellow-300">{decision.action === "learn" ? "Start Learning →" : decision.action === "support" ? "Let&apos;s practise →" : decision.action === "challenge" ? "Take Challenge →" : "Practise →"}</Link>}</div></div>}
 
       <button type="button" onClick={() => setShowPath((current) => !current)} aria-expanded={showPath} className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition hover:bg-white/[0.06]"><span><span className="block text-xs font-black uppercase tracking-widest text-slate-500">Grade {grade} pathway</span><span className="mt-1 block text-sm font-bold text-slate-300">{progress.completed} of {progress.total} steps complete</span></span><span className="text-sm font-black text-cyan-300">{showPath ? "Hide path ↑" : "View learning path →"}</span></button>
 
