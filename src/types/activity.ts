@@ -13,6 +13,7 @@ export type ActivityResult = {
   playerId: string;
   activityType: ActivityType;
   activityId: string;
+  curriculumNodeId?: string;
   storyId?: string;
   skills: Skill[];
   curriculumId?: string;
