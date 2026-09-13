@@ -13,6 +13,7 @@ export default function ChallengePage() {
   const challengeId = Array.isArray(params.id) ? params.id[0] : params.id;
   const session = useMemo(() => getChallengeSession(challengeId), [challengeId]);
   const startIndex = Math.max(0, session.challenges.findIndex((item) => item.id === challengeId));
+  const curriculumNodeId = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("node") : null;
   const { player, loading, awardXP } = usePlayer();
   const [index, setIndex] = useState(startIndex);
   const [selected, setSelected] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export default function ChallengePage() {
     const isCorrect = optionId === challenge.correctOptionId;
     setSelected(optionId);
     if (isCorrect) setScore((value) => value + 1);
-    recordActivityResult({ id: crypto.randomUUID(), playerId: activePlayer.id, activityType: "practice_challenge", activityId: challenge.id, skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand, concept: challenge.concept, correct: isCorrect, attempts: 1, hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: isCorrect ? challenge.xp : 0, timestamp: new Date().toISOString() });
+    recordActivityResult({ id: crypto.randomUUID(), playerId: activePlayer.id, activityType: "practice_challenge", activityId: challenge.id, curriculumNodeId: curriculumNodeId ?? undefined, skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand, concept: challenge.concept, correct: isCorrect, attempts: 1, hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: isCorrect ? challenge.xp : 0, timestamp: new Date().toISOString() });
     if (isCorrect) awardXP(challenge.xp);
   }
 
@@ -43,9 +44,8 @@ export default function ChallengePage() {
     if (!answered) return;
     const finalScore = score + (correct ? 1 : 0);
     if (index < session.challenges.length - 1) { setIndex((value) => value + 1); setSelected(null); return; }
-    const passed = finalScore / session.challenges.length >= 0.7;
-    if (!getActivityResults(activePlayer.id).some((result) => result.activityId === session.completionActivityId && result.correct === true)) {
-      recordActivityResult({ id: crypto.randomUUID(), playerId: activePlayer.id, activityType: "practice_challenge", activityId: session.completionActivityId, skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand, concept: challenge.concept, correct: passed, attempts: session.challenges.length, hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: 0, timestamp: new Date().toISOString() });
+    if (!getActivityResults(activePlayer.id).some((result) => result.activityId === session.completionActivityId && result.correct === true && result.curriculumNodeId === (curriculumNodeId ?? undefined))) {
+      recordActivityResult({ id: crypto.randomUUID(), playerId: activePlayer.id, activityType: "practice_challenge", activityId: session.completionActivityId, curriculumNodeId: curriculumNodeId ?? undefined, skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand, concept: challenge.concept, correct: finalScore / session.challenges.length >= 0.7, attempts: session.challenges.length, hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: 0, timestamp: new Date().toISOString() });
     }
     setScore(finalScore);
     setFinished(true);
