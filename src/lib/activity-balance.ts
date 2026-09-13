@@ -5,7 +5,7 @@ const COMPLETION_LIMIT_BEFORE_RECOMMENDATION = 2;
 type ActivityBalanceState = {
   completions: Record<string, number>;
   homePrompts: Record<string, number>;
-  lastCompletedActivityId: string | null;
+  lastEngagedActivityId: string | null;
 };
 
 export type BalancedActivityRecommendation = {
@@ -26,7 +26,7 @@ function isBrowser() {
 }
 
 function emptyState(): ActivityBalanceState {
-  return { completions: {}, homePrompts: {}, lastCompletedActivityId: null };
+  return { completions: {}, homePrompts: {}, lastEngagedActivityId: null };
 }
 
 function readState(): ActivityBalanceState {
@@ -34,11 +34,11 @@ function readState(): ActivityBalanceState {
   const raw = window.localStorage.getItem(BALANCE_KEY);
   if (!raw) return emptyState();
   try {
-    const parsed = JSON.parse(raw) as Partial<ActivityBalanceState>;
+    const parsed = JSON.parse(raw) as Partial<ActivityBalanceState> & { lastCompletedActivityId?: string | null };
     return {
       completions: parsed.completions ?? {},
       homePrompts: parsed.homePrompts ?? {},
-      lastCompletedActivityId: parsed.lastCompletedActivityId ?? null,
+      lastEngagedActivityId: parsed.lastEngagedActivityId ?? parsed.lastCompletedActivityId ?? null,
     };
   } catch {
     return emptyState();
@@ -50,11 +50,18 @@ function writeState(state: ActivityBalanceState) {
   window.localStorage.setItem(BALANCE_KEY, JSON.stringify(state));
 }
 
+/** Record that the learner genuinely entered another activity. */
+export function recordActivityStarted(activityId: string) {
+  const state = readState();
+  state.lastEngagedActivityId = activityId;
+  writeState(state);
+}
+
 /** Record one genuine completion of an activity, not an individual question answer. */
 export function recordActivityCompletion(activityId: string) {
   const state = readState();
   state.completions[activityId] = (state.completions[activityId] ?? 0) + 1;
-  state.lastCompletedActivityId = activityId;
+  state.lastEngagedActivityId = activityId;
   writeState(state);
 }
 
@@ -68,9 +75,9 @@ export function getActivityHomePromptCount(activityId: string): number {
 
 /**
  * After two completions, Home may recommend the same activity twice. Once both
- * prompts have been used, the activity is restricted until another activity
- * is completed. Completing that other activity changes lastCompletedActivityId
- * and explicitly releases the restricted activity.
+ * prompts have been used, the activity is restricted until the learner enters
+ * a different activity. A genuine activity start therefore releases the old
+ * restriction without requiring the learner to finish the new activity.
  */
 export function shouldPromptActivity(activityId: string): boolean {
   const state = readState();
@@ -90,7 +97,7 @@ export function isActivityRestricted(activityId: string): boolean {
   return (
     (state.completions[activityId] ?? 0) >= COMPLETION_LIMIT_BEFORE_RECOMMENDATION &&
     (state.homePrompts[activityId] ?? 0) >= HOME_PROMPT_LIMIT &&
-    state.lastCompletedActivityId !== activityId
+    state.lastEngagedActivityId !== activityId
   );
 }
 
