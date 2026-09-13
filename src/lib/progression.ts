@@ -28,7 +28,7 @@ export function getProgressionDecision(
   if (state === "needs_support") {
     return {
       outcome: "support",
-      node,
+      node: node.supportRoute ? { ...node, route: node.supportRoute } : node,
       nextNode: next,
       state,
       reason: "The learner needs more support before progressing on this idea.",
