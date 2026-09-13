@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Player } from "@/lib/kiddo";
 import { getCurrentPlayer } from "@/lib/player";
 import { getPlayerUnlocks, getNextUnlock } from "@/lib/unlocks";
-import { isActivityRestricted } from "@/lib/activity-balance";
+import { isActivityRestricted, recordActivityStarted } from "@/lib/activity-balance";
 
 const GAME_ROUTES: Record<string, string> = {
   "memory-match": "/games/memory-match",
@@ -41,6 +41,10 @@ export default function GamesPage() {
     const activityId = GAME_ACTIVITY_IDS[unlock.id];
     return unlock.unlocked && GAME_ROUTES[unlock.id] && activityId && !isActivityRestricted(activityId);
   });
+
+  const startGame = (activityId: string) => {
+    recordActivityStarted(activityId);
+  };
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -108,7 +112,7 @@ export default function GamesPage() {
                         You&apos;ve played this enough for now. Try something else to unlock it again.
                       </div>
                       {alternative && (
-                        <Link href={GAME_ROUTES[alternative.id]} className="mt-3 block w-full rounded-2xl bg-yellow-400 px-4 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-yellow-300">
+                        <Link href={GAME_ROUTES[alternative.id]} onClick={() => startGame(GAME_ACTIVITY_IDS[alternative.id])} className="mt-3 block w-full rounded-2xl bg-yellow-400 px-4 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-yellow-300">
                           Try {alternative.name} →
                         </Link>
                       )}
@@ -118,7 +122,7 @@ export default function GamesPage() {
                     </div>
                   ) : unlock.unlocked ? (
                     GAME_ROUTES[unlock.id] ? (
-                      <Link href={GAME_ROUTES[unlock.id]} className="mt-5 block w-full rounded-2xl bg-emerald-500 px-4 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-emerald-300">
+                      <Link href={GAME_ROUTES[unlock.id]} onClick={() => activityId && startGame(activityId)} className="mt-5 block w-full rounded-2xl bg-emerald-500 px-4 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-emerald-300">
                         Play Game →
                       </Link>
                     ) : (
