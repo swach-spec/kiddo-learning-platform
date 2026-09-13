@@ -2,18 +2,18 @@ import { vocabularyChallenges } from "@/content/demo/vocabulary-challenges";
 import { mathsChallenges } from "@/content/demo/maths-challenges";
 import { numberWorldChallenges } from "@/content/number-world";
 import { NUMBER_WORLD_CBC_BANK } from "@/content/number-world-cbc";
-import { grade2DescribingGuided, grade2DescribingIndependent, grade2SentenceBuilder } from "@/content/challenges/grade-2-english";
+import { grade2DescribingGuided, grade2DescribingIndependent, grade2SentenceBuilder, grade2DescribingMastery } from "@/content/challenges/grade-2-english";
 import { ActivityResult } from "@/types/activity";
 import { Challenge } from "@/types/challenge";
 import { PartOfSpeech, Question, Skill, Story } from "@/types/content";
 
-const allChallenges: Challenge[] = [...vocabularyChallenges, ...mathsChallenges, ...numberWorldChallenges, ...NUMBER_WORLD_CBC_BANK, ...grade2DescribingGuided, ...grade2DescribingIndependent, ...grade2SentenceBuilder];
+const allChallenges: Challenge[] = [...vocabularyChallenges, ...mathsChallenges, ...numberWorldChallenges, ...NUMBER_WORLD_CBC_BANK, ...grade2DescribingGuided, ...grade2DescribingIndependent, ...grade2SentenceBuilder, ...grade2DescribingMastery];
 export function getChallengeById(id: string): Challenge | undefined { return allChallenges.find((challenge) => challenge.id === id); }
 export function getChallengeSession(id: string): { challenges: Challenge[]; completionActivityId: string } {
   if (id.startsWith("g2-guided-")) return { challenges: grade2DescribingGuided, completionActivityId: "g2-describing-guided" };
   if (id.startsWith("g2-independent-")) return { challenges: grade2DescribingIndependent, completionActivityId: "g2-describing-independent" };
   if (id.startsWith("g2-sentence-")) return { challenges: grade2SentenceBuilder, completionActivityId: "g2-sentence-builder" };
-  if (id.startsWith("g2-mastery-")) return { challenges: grade2DescribingIndependent, completionActivityId: "g2-describing-mastery" };
+  if (id.startsWith("g2-mastery-")) return { challenges: grade2DescribingMastery, completionActivityId: "g2-describing-mastery" };
   const challenge = getChallengeById(id);
   return { challenges: challenge ? [challenge] : [], completionActivityId: id };
 }
