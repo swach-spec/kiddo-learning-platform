@@ -139,16 +139,18 @@ type StoredLearnerProgress = LearnerProgressState & {
   activityProgress?: Record<string, ActivityProgressState>;
 };
 
+type StoredProgressMap = Record<string, StoredLearnerProgress>;
+
 const progress: ProgressRepository = {
   getLearnerProgress(playerId) {
-    const all = readJSON<Record<string, StoredLearnerProgress>>(PROGRESS_KEY) ?? {};
+    const all = readJSON<StoredProgressMap>(PROGRESS_KEY) ?? {};
     return all[playerId] ?? null;
   },
 
   saveLearnerProgress(playerId, value) {
-    const all = readJSON<Record<string, StoredLearnerProgress>>(PROGRESS_KEY) ?? {};
+    const all = readJSON<StoredProgressMap>(PROGRESS_KEY) ?? {};
     const existing = all[playerId] ?? {};
-    const activityProgress = existing.activityProgress ?? {};
+    const activityProgress: Record<string, ActivityProgressState> = existing.activityProgress ?? {};
     const next: StoredLearnerProgress = {
       ...existing,
       ...value,
@@ -161,19 +163,19 @@ const progress: ProgressRepository = {
   },
 
   getActivityProgress(playerId, activityId) {
-    const learner = this.getLearnerProgress(playerId);
-    return learner && "activityProgress" in learner
-      ? ((learner.activityProgress?.[activityId] as ActivityProgressState | undefined) ?? null)
-      : null;
+    const learner = this.getLearnerProgress(playerId) as StoredLearnerProgress | null;
+    const activityProgress: Record<string, ActivityProgressState> = learner?.activityProgress ?? {};
+    return activityProgress[activityId] ?? null;
   },
 
   saveActivityProgress(playerId, value) {
-    const learner = this.getLearnerProgress(playerId) as StoredLearnerProgress | null;
-    const activityProgress = learner?.activityProgress ?? {};
+    const all = readJSON<StoredProgressMap>(PROGRESS_KEY) ?? {};
+    const learner = all[playerId] ?? {};
+    const activityProgress: Record<string, ActivityProgressState> = learner.activityProgress ?? {};
     writeJSON(PROGRESS_KEY, {
-      ...(readJSON<Record<string, StoredLearnerProgress>>(PROGRESS_KEY) ?? {}),
+      ...all,
       [playerId]: {
-        ...(learner ?? {}),
+        ...learner,
         activityProgress: {
           ...activityProgress,
           [value.activityId]: value,
