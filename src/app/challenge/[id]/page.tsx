@@ -70,14 +70,40 @@ export default function ChallengePage() {
     const results = getActivityResults(activePlayer.id);
     const progression = node && !isSupportActivity ? getProgressionDecision(results, getEnglishPath(node.grade), node) : null;
 
-    // A support activity is an intervention, not a curriculum step. It must
-    // return the learner to the original node rather than accidentally moving
-    // them forward or creating another support loop.
-    const destinationNode = isSupportActivity ? node : progression?.outcome === "support" ? progression.node : progression?.nextNode;
+    // Support is an intervention. A developing learner stays on the current
+    // practice node until its mastery evidence is complete; only an `advance`
+    // decision moves to the next curriculum node.
+    const destinationNode = isSupportActivity
+      ? node
+      : progression?.outcome === "support"
+        ? progression.node
+        : progression?.outcome === "advance"
+          ? progression.nextNode
+          : progression?.node;
     const destinationHref = destinationNode ? `${destinationNode.route}?node=${encodeURIComponent(destinationNode.id)}` : "/";
-    const destinationLabel = isSupportActivity ? "Return to This Skill →" : progression?.outcome === "support" ? "Try a Support Activity →" : destinationNode ? `Continue to ${destinationNode.title} →` : "Continue Your Learning →";
-    const headline = isSupportActivity ? (passed ? "Good work — keep building!" : "Let’s keep strengthening this skill.") : progression?.outcome === "support" ? "Let’s strengthen this skill." : progression?.outcome === "advance" ? "You’re ready for the next step!" : passed ? "Great work!" : "Good effort!";
-    const message = isSupportActivity ? "This support activity gives you another chance to practise the idea before moving on." : progression?.outcome === "support" ? "KIDDO noticed that this idea needs more support before you move on." : progression?.outcome === "advance" ? "You have met the evidence needed for this step." : "Keep practising. KIDDO is using your work to decide what you need next.";
+    const destinationLabel = isSupportActivity
+      ? "Return to This Skill →"
+      : progression?.outcome === "support"
+        ? "Try a Support Activity →"
+        : progression?.outcome === "advance"
+          ? destinationNode ? `Continue to ${destinationNode.title} →` : "Continue Your Learning →"
+          : "Return to This Skill →";
+    const headline = isSupportActivity
+      ? (passed ? "Good work — keep building!" : "Let’s keep strengthening this skill.")
+      : progression?.outcome === "support"
+        ? "Let’s strengthen this skill."
+        : progression?.outcome === "advance"
+          ? "You’re ready for the next step!"
+          : passed
+            ? "Good work — keep building!"
+            : "Good effort!";
+    const message = isSupportActivity
+      ? "This support activity gives you another chance to practise the idea before moving on."
+      : progression?.outcome === "support"
+        ? "KIDDO noticed that this idea needs more support before you move on."
+        : progression?.outcome === "advance"
+          ? "You have met the evidence needed for this step."
+          : "You are building evidence for this skill. Keep practising until KIDDO is confident you are ready to move on.";
 
     return <main className="min-h-screen bg-slate-950 text-white"><div className="mx-auto max-w-2xl px-5 py-10"><section className="rounded-[2rem] border border-white/10 bg-white/5 p-8 text-center sm:p-12"><div className="text-6xl">{isSupportActivity ? "🧩" : progression?.outcome === "support" ? "🧩" : passed ? "🎉" : "💪"}</div><h1 className="mt-4 text-4xl font-black">{headline}</h1><p className="mt-3 text-lg text-slate-400">You got <strong className="text-white">{score}</strong> of {session.challenges.length} correct.</p><p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-500">{message}</p><Link href={destinationHref} className="mt-8 flex w-full items-center justify-center rounded-2xl bg-cyan-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-950">{destinationLabel}</Link></section></div></main>;
   }
