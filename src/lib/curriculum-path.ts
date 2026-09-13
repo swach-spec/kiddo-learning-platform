@@ -17,7 +17,7 @@ function nodeEvidence(results: ActivityResult[], node: CurriculumNode) {
   return results.filter((result) => result.activityId === node.activityId || result.activityId === node.id || (node.kind === "lesson" && legacyLessonIds.includes(result.activityId)));
 }
 
-function getNodeLearningState(results: ActivityResult[], node: CurriculumNode) {
+export function getNodeLearningState(results: ActivityResult[], node: CurriculumNode) {
   const evidence = nodeEvidence(results, node);
   if (!evidence.length) return "developing" as const;
   const skills = [...new Set(evidence.flatMap((result) => result.skills))];
@@ -45,10 +45,6 @@ export function getNextCurriculumNode(results: ActivityResult[], path: Curriculu
 export function getNextLearningDecision(results: ActivityResult[], grade: number): NextLearningDecision | null {
   const node = getNextCurriculumNode(results, getEnglishPath(grade));
   if (!node) return null;
-
-  // Only evidence attached to this curriculum stage influences its decision.
-  // This prevents an old mistake in another skill from blocking the learner's
-  // current pathway.
   const state = getNodeLearningState(results, node);
 
   if (state === "needs_support") return { node, route: "remediation", action: "support", reason: "KIDDO noticed that this idea needs more support before you move on." };
