@@ -98,6 +98,7 @@ export function recordActivityResult(result: ActivityResult) {
   repositories.progress.saveLearnerProgress(result.playerId, {
     ...existing,
     currentSubject: subject,
+    currentCurriculumNodeId: result.curriculumNodeId ?? existing?.currentCurriculumNodeId,
     currentActivityId: result.activityId,
     lastActivityId: result.activityId,
     updatedAt: now,
