@@ -1,6 +1,7 @@
 import { getLevelFromXP, Player } from "@/lib/kiddo";
 import { ActivityResult } from "@/types/activity";
 import { getRepositories } from "@/data/repositories";
+import { ActivityProgressState } from "@/data/repositories/types";
 
 /**
  * Compatibility facade for the existing UI.
@@ -10,7 +11,7 @@ import { getRepositories } from "@/data/repositories";
  */
 const repositories = getRepositories();
 
-/** Re-exported for legacy consumers while ActivityResult moves to the data layer. */
+/** Re-exported for legacy consumers while ActivityResult moves to data layer. */
 export type { ActivityResult } from "@/types/activity";
 
 export type LearnerProgress = {
@@ -65,6 +66,42 @@ export function markStoryCompleted(playerId: string, storyId: string): Player | 
 
 export function recordActivityResult(result: ActivityResult) {
   repositories.activities.recordResult(result);
+
+  const now = new Date().toISOString();
+  const previous = repositories.progress.getActivityProgress(result.playerId, result.activityId);
+  const completionCount = (previous?.completionCount ?? 0) + (result.correct === true ? 1 : 0);
+  const accuracy = result.correct === null
+    ? previous?.accuracy
+    : result.correct
+      ? 1
+      : 0;
+
+  const activityProgress: ActivityProgressState = {
+    activityId: result.activityId,
+    status: result.correct === true ? "completed" : "in_progress",
+    completionCount,
+    bestScore: Math.max(previous?.bestScore ?? 0, result.correct === true ? 1 : 0),
+    accuracy,
+    firstStartedAt: previous?.firstStartedAt ?? result.timestamp,
+    lastStartedAt: now,
+    lastCompletedAt: result.correct === true ? now : previous?.lastCompletedAt,
+  };
+
+  repositories.progress.saveActivityProgress(result.playerId, activityProgress);
+
+  const subject: LearnerProgress["currentSubject"] =
+    result.activityType === "story_reading" || result.skills.includes("grammar") || result.skills.includes("reading_comprehension")
+      ? "english"
+      : "mathematics";
+
+  const existing = repositories.progress.getLearnerProgress(result.playerId) as LearnerProgress | null;
+  repositories.progress.saveLearnerProgress(result.playerId, {
+    ...existing,
+    currentSubject: subject,
+    currentActivityId: result.activityId,
+    lastActivityId: result.activityId,
+    updatedAt: now,
+  });
 }
 
 export function getActivityResults(playerId: string): ActivityResult[] {
@@ -93,4 +130,8 @@ export function updateLearnerPosition(
 ) {
   const existing = getLearnerProgress(playerId) ?? {};
   saveLearnerProgress(playerId, { ...existing, ...position });
+}
+
+export function getActivityProgress(playerId: string, activityId: string): ActivityProgressState | null {
+  return repositories.progress.getActivityProgress(playerId, activityId);
 }
