@@ -2,7 +2,7 @@ import { ActivityResult } from "@/types/activity";
 import { CurriculumNode, NextLearningDecision } from "@/types/curriculum-path";
 import { getEnglishPath } from "@/content/curriculum/english-path";
 import { getActivityResults, getLearnerProgress, updateLearnerPosition } from "@/lib/player";
-import { getNextLearningDecision } from "@/lib/curriculum-path";
+import { getNextLearningDecision, isNodeComplete } from "@/lib/curriculum-path";
 
 export type GuidedLearningPosition = {
   node: CurriculumNode | null;
@@ -37,9 +37,8 @@ export function getCurrentLearningPosition(
   const progress = getLearnerProgress(playerId);
   const savedNode = findSavedNode(path, progress);
 
-  if (savedNode) {
-    const decision = getNextLearningDecision(results, grade);
-    return { node: savedNode, decision, source: "saved" };
+  if (savedNode && !isNodeComplete(results, savedNode)) {
+    return { node: savedNode, decision: getNextLearningDecision(results, grade), source: "saved" };
   }
 
   const decision = getNextLearningDecision(results, grade);
