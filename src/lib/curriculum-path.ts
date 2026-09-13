@@ -2,6 +2,7 @@ import { ActivityResult } from "@/types/activity";
 import { CurriculumNode, NextLearningDecision } from "@/types/curriculum-path";
 import { getOverallLearningState } from "@/lib/adaptive-learning";
 import { getEnglishPath } from "@/content/curriculum/english-path";
+import { meetsMasteryThreshold } from "@/lib/mastery";
 
 function nodeEvidence(results: ActivityResult[], node: CurriculumNode) {
   const nodeSpecific = results.filter((result) => result.curriculumNodeId === node.id);
@@ -29,6 +30,9 @@ export function isNodeComplete(results: ActivityResult[], node: CurriculumNode):
   if (!evidence.length) return false;
   if (node.kind === "lesson") return evidence.some((result) => result.correct === true);
   if (node.kind === "story") return evidence.some((result) => result.activityType === "story_reading");
+  if (node.kind === "guided_practice" || node.kind === "independent_practice" || node.kind === "mastery") {
+    return meetsMasteryThreshold(results, node.id, node.kind);
+  }
   return evidence.some((result) => result.correct === true);
 }
 
