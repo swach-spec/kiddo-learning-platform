@@ -7,12 +7,14 @@ function nodeEvidence(results: ActivityResult[], node: CurriculumNode) {
   const nodeSpecific = results.filter((result) => result.curriculumNodeId === node.id);
   if (nodeSpecific.length) return nodeSpecific;
 
-  // Legacy results can safely identify standalone lesson/story activities.
   // Practice stages intentionally share one challenge implementation, so
   // legacy activityId matching must not make every stage appear complete.
   if (node.kind === "guided_practice" || node.kind === "independent_practice" || node.kind === "mastery") return [];
 
-  return results.filter((result) => result.activityId === node.activityId || result.activityId === node.id);
+  // The adjective lesson predates curriculumNodeId. Keep existing learner
+  // progress valid while the curriculum layer is being introduced.
+  const legacyLessonIds = [`english-g${node.grade}-describing-words`, `english-g${node.grade}-adjectives`];
+  return results.filter((result) => result.activityId === node.activityId || result.activityId === node.id || (node.kind === "lesson" && legacyLessonIds.includes(result.activityId)));
 }
 
 export function isNodeComplete(results: ActivityResult[], node: CurriculumNode): boolean {
