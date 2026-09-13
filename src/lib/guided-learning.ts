@@ -23,14 +23,17 @@ function findSavedNode(path: CurriculumNode[], progress: ReturnType<typeof getLe
   return null;
 }
 
+function getNextNode(path: CurriculumNode[], node: CurriculumNode) {
+  const index = path.findIndex((candidate) => candidate.id === node.id);
+  return index >= 0 ? path[index + 1] ?? null : null;
+}
+
 export function getCurrentLearningPosition(
   playerId: string,
   grade: number,
   subject: "english" | "mathematics" = "english",
 ): GuidedLearningPosition {
-  if (subject !== "english") {
-    return { node: null, decision: null, source: "next" };
-  }
+  if (subject !== "english") return { node: null, decision: null, source: "next" };
 
   const path = getEnglishPath(grade);
   const results = getActivityResults(playerId);
@@ -39,6 +42,27 @@ export function getCurrentLearningPosition(
 
   if (savedNode && !isNodeComplete(results, savedNode)) {
     return { node: savedNode, decision: getNextLearningDecision(results, grade), source: "saved" };
+  }
+
+  // A completed saved node must not trap the learner on the same step.
+  // Advance to the next node in the curriculum sequence.
+  if (savedNode && isNodeComplete(results, savedNode)) {
+    const nextNode = getNextNode(path, savedNode);
+    if (nextNode) {
+      const decision = getNextLearningDecision(results, grade);
+      return {
+        node: nextNode,
+        decision: decision?.node.id === nextNode.id
+          ? decision
+          : {
+              node: nextNode,
+              route: "main",
+              action: nextNode.kind === "lesson" ? "learn" : nextNode.kind === "mastery" ? "challenge" : "practise",
+              reason: "You completed the previous step. Here is the next step in your learning adventure.",
+            },
+        source: "next",
+      };
+    }
   }
 
   const decision = getNextLearningDecision(results, grade);
