@@ -14,10 +14,7 @@ type Props = { player: Player; stories: Story[]; activityResults: ActivityResult
 
 function getNodeHref(node: ReturnType<typeof getEnglishPath>[number]) {
   if (!node.route) return undefined;
-  if (node.kind === "guided_practice" || node.kind === "independent_practice" || node.kind === "mastery") {
-    return `${node.route}?node=${encodeURIComponent(node.id)}`;
-  }
-  return node.route;
+  return `${node.route}${node.route.includes("?") ? "&" : "?"}node=${encodeURIComponent(node.id)}`;
 }
 
 function stateCopy(state: ReturnType<typeof getNodeLearningState>) {
