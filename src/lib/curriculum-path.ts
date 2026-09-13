@@ -51,7 +51,10 @@ export function getNextLearningDecision(results: ActivityResult[], grade: number
   if (!node) return null;
   const state = getNodeLearningState(results, node);
 
-  if (state === "needs_support") return { node, route: "remediation", action: "support", reason: "KIDDO noticed that this idea needs more support before you move on." };
+  if (state === "needs_support") {
+    const supportNode = node.supportRoute ? { ...node, route: node.supportRoute } : node;
+    return { node: supportNode, route: "remediation", action: "support", reason: "KIDDO noticed that this idea needs more support before you move on." };
+  }
   if (node.kind === "lesson") return { node, route: "main", action: "learn", reason: "This is the next required idea on your grade pathway." };
   if (node.kind === "mastery") return { node, route: "mastery", action: "challenge", reason: "You have reached a mastery checkpoint for this part of the pathway." };
   if (state === "secure") return { node, route: "acceleration", action: "challenge", reason: "You are showing strong understanding, so KIDDO can reduce repetition and give you a stronger task." };
