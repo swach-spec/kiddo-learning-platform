@@ -27,4 +27,10 @@ export type ActivityResult = {
   difficulty?: 1 | 2 | 3;
   xpAwarded: number;
   timestamp: string;
+  /** Identifies all question-level evidence belonging to one learning session. */
+  sessionId?: string;
+  /** Present on a single session-summary result used for mastery decisions. */
+  isSessionSummary?: boolean;
+  score?: number;
+  totalQuestions?: number;
 };
