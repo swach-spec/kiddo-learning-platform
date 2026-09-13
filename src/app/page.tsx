@@ -11,21 +11,27 @@ import { AdventurePaths } from "@/components/AdventurePaths";
 import { LearningJourney } from "@/components/LearningJourney";
 import { WordHelper } from "@/components/WordHelper";
 import { getNextActivityRecommendation, recordHomePrompt } from "@/lib/activity-balance";
+import { getCurrentLearningPosition } from "@/lib/guided-learning";
 import type { BalancedActivityRecommendation } from "@/lib/activity-balance";
 import type { LearnerProgress } from "@/lib/player";
+import type { CurriculumNode } from "@/types/curriculum-path";
 
 export default function Home() {
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
   const [recommendation, setRecommendation] = useState<BalancedActivityRecommendation | null>(null);
   const [learnerProgress, setLearnerProgress] = useState<LearnerProgress | null>(null);
+  const [nextNode, setNextNode] = useState<CurriculumNode | null>(null);
 
   useEffect(() => {
     if (!isLoggedIn()) { window.location.href = "/login"; return; }
     const current = getCurrentPlayer();
     if (!current) { window.location.href = "/players"; return; }
     setPlayer(current);
-    setLearnerProgress(getLearnerProgress(current.id));
+    const progress = getLearnerProgress(current.id);
+    setLearnerProgress(progress);
+    const grade = Number(current.grade.replace(/\D/g, "")) || 2;
+    setNextNode(getCurrentLearningPosition(current.id, grade).node);
     const next = getNextActivityRecommendation(current.id);
     setRecommendation(next);
     if (next) recordHomePrompt(next.activityId);
@@ -41,7 +47,7 @@ export default function Home() {
   const numberWorldActivities = activityResults.filter((result) => result.activityId.startsWith("number-world-"));
   const numberWorldProgress = Math.min(100, Math.round((new Set(numberWorldActivities.map((result) => result.activityId)).size / 48) * 100));
 
-  const resume = getResumeDestination(learnerProgress);
+  const resume = getResumeDestination(learnerProgress, nextNode);
 
   return (
     <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
@@ -57,8 +63,8 @@ export default function Home() {
         {resume && (
           <section className="mt-5 rounded-3xl border border-cyan-400/20 bg-cyan-400/5 p-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">Welcome back</p><h2 className="mt-1 text-xl font-black">Continue your {resume.label}</h2><p className="mt-1 text-sm text-slate-400">KIDDO saved your last learning position. Pick up from here.</p></div>
-              <Link href={resume.href} className="shrink-0 rounded-2xl bg-cyan-300 px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-cyan-200">Continue →</Link>
+              <div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{resume.eyebrow}</p><h2 className="mt-1 text-xl font-black">{resume.title}</h2><p className="mt-1 text-sm text-slate-400">{resume.description}</p></div>
+              <Link href={resume.href} className="shrink-0 rounded-2xl bg-cyan-300 px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-cyan-200">{resume.cta} →</Link>
             </div>
           </section>
         )}
@@ -84,10 +90,20 @@ export default function Home() {
   );
 }
 
-function getResumeDestination(progress: LearnerProgress | null) {
+function getResumeDestination(progress: LearnerProgress | null, nextNode: CurriculumNode | null) {
+  if (nextNode?.route) {
+    const saved = Boolean(progress?.currentCurriculumNodeId || progress?.currentActivityId);
+    return {
+      eyebrow: saved ? "Welcome back" : "Your next step",
+      title: saved ? `Continue: ${nextNode.title}` : `Start: ${nextNode.title}`,
+      description: saved ? "KIDDO saved your learning position. Pick up where you left off." : "KIDDO has chosen the next step on your grade pathway.",
+      href: nextNode.route,
+      cta: saved ? "Continue" : "Start",
+    };
+  }
   if (!progress?.currentSubject && !progress?.currentActivityId) return null;
-  if (progress.currentSubject === "mathematics") return { label: "Maths adventure", href: "/number-world-cbc" };
-  return { label: "English adventure", href: "/story" };
+  if (progress.currentSubject === "mathematics") return { eyebrow: "Welcome back", title: "Continue your Maths adventure", description: "KIDDO saved your last learning position.", href: "/number-world-cbc", cta: "Continue" };
+  return { eyebrow: "Welcome back", title: "Continue your English adventure", description: "KIDDO saved your last learning position.", href: "/story", cta: "Continue" };
 }
 
 function StatCard({ icon, label, value, suffix }: { icon: string; label: string; value: string; suffix: string }) { return <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5"><p className="text-xs font-bold uppercase tracking-widest text-slate-500">{icon} {label}</p><div className="mt-2 flex items-end gap-2"><span className="text-3xl font-black">{value}</span><span className="mb-1 text-xs text-slate-500">{suffix}</span></div></div>; }
