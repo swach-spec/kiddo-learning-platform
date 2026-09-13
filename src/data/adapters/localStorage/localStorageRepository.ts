@@ -133,15 +133,49 @@ const activities: ActivityRepository = {
   },
 };
 
+type StoredLearnerProgress = Record<string, unknown> & {
+  activityProgress?: Record<string, Record<string, unknown>>;
+};
+
 const progress: ProgressRepository = {
   getLearnerProgress(playerId) {
-    const all = readJSON<Record<string, Record<string, unknown>>>(PROGRESS_KEY) ?? {};
+    const all = readJSON<Record<string, StoredLearnerProgress>>(PROGRESS_KEY) ?? {};
     return all[playerId] ?? null;
   },
 
   saveLearnerProgress(playerId, value) {
-    const all = readJSON<Record<string, Record<string, unknown>>>(PROGRESS_KEY) ?? {};
-    writeJSON(PROGRESS_KEY, { ...all, [playerId]: value });
+    const all = readJSON<Record<string, StoredLearnerProgress>>(PROGRESS_KEY) ?? {};
+    const existing = all[playerId] ?? {};
+    const activityProgress = existing.activityProgress ?? {};
+    writeJSON(PROGRESS_KEY, {
+      ...all,
+      [playerId]: {
+        ...existing,
+        ...value,
+        activityProgress,
+      },
+    });
+  },
+
+  getActivityProgress(playerId, activityId) {
+    const learner = this.getLearnerProgress(playerId) as StoredLearnerProgress | null;
+    return (learner?.activityProgress?.[activityId] as never) ?? null;
+  },
+
+  saveActivityProgress(playerId, value) {
+    const learner = (this.getLearnerProgress(playerId) as StoredLearnerProgress | null) ?? {};
+    const activityProgress = learner.activityProgress ?? {};
+    writeJSON(PROGRESS_KEY, {
+      ...(readJSON<Record<string, StoredLearnerProgress>>(PROGRESS_KEY) ?? {}),
+      [playerId]: {
+        ...learner,
+        activityProgress: {
+          ...activityProgress,
+          [value.activityId]: value,
+        },
+        updatedAt: new Date().toISOString(),
+      },
+    });
   },
 };
 
