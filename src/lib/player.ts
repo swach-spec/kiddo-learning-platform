@@ -13,6 +13,17 @@ const repositories = getRepositories();
 /** Re-exported for legacy consumers while ActivityResult moves to the data layer. */
 export type { ActivityResult } from "@/types/activity";
 
+export type LearnerProgress = {
+  currentSubject?: "english" | "mathematics";
+  currentCurriculumNodeId?: string;
+  currentLearningUnitId?: string;
+  currentActivityId?: string;
+  learningState?: "secure" | "developing" | "needs_support";
+  progressPercent?: number;
+  lastActivityId?: string;
+  updatedAt?: string;
+};
+
 /** Returns only the explorers owned by the currently signed-in family. */
 export function getPlayers(): Player[] {
   return repositories.learners.getLearners();
@@ -58,4 +69,28 @@ export function recordActivityResult(result: ActivityResult) {
 
 export function getActivityResults(playerId: string): ActivityResult[] {
   return repositories.activities.getResults(playerId);
+}
+
+/**
+ * Persist the learner's current position separately from identity and XP.
+ * This mirrors the production learner_progress entity without changing the
+ * existing Player shape or localStorage compatibility keys.
+ */
+export function getLearnerProgress(playerId: string): LearnerProgress | null {
+  return repositories.progress.getLearnerProgress(playerId) as LearnerProgress | null;
+}
+
+export function saveLearnerProgress(playerId: string, progress: LearnerProgress) {
+  repositories.progress.saveLearnerProgress(playerId, {
+    ...progress,
+    updatedAt: progress.updatedAt ?? new Date().toISOString(),
+  });
+}
+
+export function updateLearnerPosition(
+  playerId: string,
+  position: Pick<LearnerProgress, "currentSubject" | "currentCurriculumNodeId" | "currentLearningUnitId" | "currentActivityId">,
+) {
+  const existing = getLearnerProgress(playerId) ?? {};
+  saveLearnerProgress(playerId, { ...existing, ...position });
 }
