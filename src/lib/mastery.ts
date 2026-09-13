@@ -18,8 +18,15 @@ export function getMasteryPolicy(kind: CurriculumNodeKind): MasteryPolicy | null
   return POLICIES[kind as keyof typeof POLICIES];
 }
 
+/**
+ * Mastery is measured from completed learning sessions, not individual
+ * questions. Question-level records remain useful evidence, but must not
+ * inflate the number of attempts needed to reach a mastery threshold.
+ */
 export function getMasteryEvidence(results: ActivityResult[], nodeId: string) {
-  return results.filter((result) => result.curriculumNodeId === nodeId);
+  return results.filter(
+    (result) => result.curriculumNodeId === nodeId && result.isSessionSummary === true
+  );
 }
 
 export function meetsMasteryThreshold(results: ActivityResult[], nodeId: string, kind: CurriculumNodeKind): boolean {
