@@ -93,11 +93,14 @@ export default function Home() {
 function getResumeDestination(progress: LearnerProgress | null, nextNode: CurriculumNode | null) {
   if (nextNode?.route) {
     const saved = Boolean(progress?.currentCurriculumNodeId || progress?.currentActivityId);
+    const href = nextNode.kind === "guided_practice" || nextNode.kind === "independent_practice" || nextNode.kind === "mastery"
+      ? `${nextNode.route}?node=${encodeURIComponent(nextNode.id)}`
+      : nextNode.route;
     return {
       eyebrow: saved ? "Welcome back" : "Your next step",
       title: saved ? `Continue: ${nextNode.title}` : `Start: ${nextNode.title}`,
       description: saved ? "KIDDO saved your learning position. Pick up where you left off." : "KIDDO has chosen the next step on your grade pathway.",
-      href: nextNode.route,
+      href,
       cta: saved ? "Continue" : "Start",
     };
   }
