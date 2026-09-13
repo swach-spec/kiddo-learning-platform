@@ -47,8 +47,11 @@ export default function ChallengePage() {
 
   function next() {
     if (!answered) return;
-    const finalScore = score + (correct ? 1 : 0);
     if (index < session.challenges.length - 1) { setIndex((value) => value + 1); setSelected(null); return; }
+
+    // `score` is already updated when the final answer is selected. Adding
+    // `correct` again here double-counted a correct final answer (for example 9/8).
+    const finalScore = score;
     if (!getActivityResults(activePlayer.id).some((result) => result.activityId === session.completionActivityId && result.correct === true && result.curriculumNodeId === (curriculumNodeId ?? undefined) && result.sessionId === sessionId)) {
       const passed = finalScore / session.challenges.length >= 0.7;
       recordActivityResult({ id: crypto.randomUUID(), playerId: activePlayer.id, activityType: "practice_challenge", activityId: session.completionActivityId, curriculumNodeId: curriculumNodeId ?? undefined, skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand, concept: challenge.concept, correct: passed, attempts: session.challenges.length, hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: 0, timestamp: new Date().toISOString(), sessionId, isSessionSummary: true, score: finalScore, totalQuestions: session.challenges.length });
