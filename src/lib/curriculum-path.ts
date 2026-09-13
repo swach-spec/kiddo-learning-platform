@@ -19,7 +19,16 @@ function nodeEvidence(results: ActivityResult[], node: CurriculumNode) {
 }
 
 export function getNodeLearningState(results: ActivityResult[], node: CurriculumNode) {
-  const evidence = nodeEvidence(results, node);
+  let evidence = nodeEvidence(results, node);
+
+  // Adaptive state for practice stages must be based on completed sessions,
+  // not question-level records. Otherwise one or two earlier failed questions
+  // can keep a learner in `needs_support` even after they consistently pass
+  // complete practice sessions.
+  if (node.kind === "guided_practice" || node.kind === "independent_practice" || node.kind === "mastery") {
+    evidence = evidence.filter((result) => result.isSessionSummary === true);
+  }
+
   if (!evidence.length) return "developing" as const;
   const skills = [...new Set(evidence.flatMap((result) => result.skills))];
   return getOverallLearningState(evidence, skills);
