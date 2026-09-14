@@ -20,12 +20,14 @@ export function getMasteryPolicy(kind: CurriculumNodeKind): MasteryPolicy | null
 
 /**
  * Mastery is measured from completed learning sessions, not individual
- * questions. Question-level records remain useful evidence, but must not
- * inflate the number of attempts needed to reach a mastery threshold.
+ * questions. Remediation sessions can reset a learner's support state, but
+ * they do not count toward mastery attempts.
  */
 export function getMasteryEvidence(results: ActivityResult[], nodeId: string) {
   return results.filter(
-    (result) => result.curriculumNodeId === nodeId && result.isSessionSummary === true
+    (result) => result.curriculumNodeId === nodeId
+      && result.isSessionSummary === true
+      && result.isRemediation !== true
   );
 }
 
