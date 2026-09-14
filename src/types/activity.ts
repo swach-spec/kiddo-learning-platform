@@ -31,6 +31,8 @@ export type ActivityResult = {
   sessionId?: string;
   /** Present on a single session-summary result used for mastery decisions. */
   isSessionSummary?: boolean;
+  /** Marks a support/remediation session so it can influence learning state without counting as mastery evidence. */
+  isRemediation?: boolean;
   score?: number;
   totalQuestions?: number;
 };
