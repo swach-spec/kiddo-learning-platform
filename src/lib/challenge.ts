@@ -9,13 +9,37 @@ import { Challenge } from "@/types/challenge";
 import { PartOfSpeech, Question, Skill, Story } from "@/types/content";
 
 const allChallenges: Challenge[] = [...vocabularyChallenges, ...mathsChallenges, ...numberWorldChallenges, ...NUMBER_WORLD_CBC_BANK, ...grade2DescribingGuided, ...grade2DescribingIndependent, ...grade2SentenceBuilder, ...grade2DescribingMastery, ...grade2DescribingSupport];
+
 export function getChallengeById(id: string): Challenge | undefined { return allChallenges.find((challenge) => challenge.id === id); }
+
+function shuffle<T>(items: T[]): T[] {
+  const result = [...items];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+  }
+  return result;
+}
+
+function prepareSession(challenges: Challenge[], completionActivityId: string) {
+  return {
+    // Shuffle both the question order and each question's answer choices for
+    // every new session. The correctOptionId travels with its option, so the
+    // answer remains correct even after it moves from A to B or C.
+    challenges: shuffle(challenges).map((challenge) => ({
+      ...challenge,
+      options: shuffle(challenge.options),
+    })),
+    completionActivityId,
+  };
+}
+
 export function getChallengeSession(id: string): { challenges: Challenge[]; completionActivityId: string } {
-  if (id.startsWith("g2-guided-")) return { challenges: grade2DescribingGuided, completionActivityId: "g2-describing-guided" };
-  if (id.startsWith("g2-independent-")) return { challenges: grade2DescribingIndependent, completionActivityId: "g2-describing-independent" };
-  if (id.startsWith("g2-sentence-")) return { challenges: grade2SentenceBuilder, completionActivityId: "g2-sentence-builder" };
-  if (id.startsWith("g2-mastery-")) return { challenges: grade2DescribingMastery, completionActivityId: "g2-describing-mastery" };
-  if (id.startsWith("g2-support-")) return { challenges: grade2DescribingSupport, completionActivityId: "g2-describing-support" };
+  if (id.startsWith("g2-guided-")) return prepareSession(grade2DescribingGuided, "g2-describing-guided");
+  if (id.startsWith("g2-independent-")) return prepareSession(grade2DescribingIndependent, "g2-describing-independent");
+  if (id.startsWith("g2-sentence-")) return prepareSession(grade2SentenceBuilder, "g2-sentence-builder");
+  if (id.startsWith("g2-mastery-")) return prepareSession(grade2DescribingMastery, "g2-describing-mastery");
+  if (id.startsWith("g2-support-")) return prepareSession(grade2DescribingSupport, "g2-describing-support");
   const challenge = getChallengeById(id);
   return { challenges: challenge ? [challenge] : [], completionActivityId: id };
 }
