@@ -16,7 +16,12 @@ export default function ChallengePage() {
   const params = useParams<{ id: string }>();
   const challengeId = Array.isArray(params.id) ? params.id[0] : params.id;
   const session = useMemo(() => getChallengeSession(challengeId), [challengeId]);
-  const startIndex = Math.max(0, session.challenges.findIndex((item) => item.id === challengeId));
+
+  // The route identifies the challenge bank, not a question. The bank itself
+  // is shuffled, so starting from the route id would randomly skip questions.
+  // Every multi-question session must always begin at question 1.
+  const startIndex = 0;
+
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const curriculumNodeId = searchParams?.get("node") ?? null;
   const isSupportActivity = challengeId.startsWith("g2-support-") || searchParams?.get("support") === "1";
@@ -43,7 +48,7 @@ export default function ChallengePage() {
     const isCorrect = optionId === challenge.correctOptionId;
     setSelected(optionId);
     if (isCorrect) setScore((value) => value + 1);
-    recordActivityResult({ id: crypto.randomUUID(), playerId: activePlayer.id, activityType: "practice_challenge", activityId: challenge.id, curriculumNodeId: isSupportActivity ? undefined : curriculumNodeId ?? undefined, skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand, concept: challenge.concept, correct: isCorrect, attempts: 1, hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: isCorrect ? challenge.xp : 0, timestamp: new Date().toISOString(), sessionId });
+    recordActivityResult({ id: crypto.randomUUID(), playerId: activePlayer.id, activityType: "practice_challenge", activityId: challenge.id, curriculumNodeId: curriculumNodeId ?? undefined, skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand, concept: challenge.concept, correct: isCorrect, attempts: 1, hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: isCorrect ? challenge.xp : 0, timestamp: new Date().toISOString(), sessionId });
     if (isCorrect) awardXP(challenge.xp);
   }
 
@@ -55,9 +60,16 @@ export default function ChallengePage() {
     // render after the answer was selected. Adding `correct` here double-counts
     // the final question and can produce impossible scores such as 7 of 6.
     const finalScore = score;
-    if (!getActivityResults(activePlayer.id).some((result) => result.activityId === session.completionActivityId && result.curriculumNodeId === (isSupportActivity ? undefined : curriculumNodeId ?? undefined) && result.sessionId === sessionId && result.isSessionSummary === true)) {
-      const passed = finalScore / session.challenges.length >= 0.7;
-      recordActivityResult({ id: crypto.randomUUID(), playerId: activePlayer.id, activityType: "practice_challenge", activityId: session.completionActivityId, curriculumNodeId: isSupportActivity ? undefined : curriculumNodeId ?? undefined, skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand, concept: challenge.concept, correct: passed, attempts: session.challenges.length, hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: 0, timestamp: new Date().toISOString(), sessionId, isSessionSummary: true, score: finalScore, totalQuestions: session.challenges.length });
+    const passed = finalScore / session.challenges.length >= 0.7;
+    const existingSummary = getActivityResults(activePlayer.id).some(
+      (result) => result.activityId === session.completionActivityId
+        && result.curriculumNodeId === (curriculumNodeId ?? undefined)
+        && result.sessionId === sessionId
+        && result.isSessionSummary === true
+    );
+
+    if (!existingSummary) {
+      recordActivityResult({ id: crypto.randomUUID(), playerId: activePlayer.id, activityType: "practice_challenge", activityId: session.completionActivityId, curriculumNodeId: curriculumNodeId ?? undefined, skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand, concept: challenge.concept, correct: passed, attempts: session.challenges.length, hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: 0, timestamp: new Date().toISOString(), sessionId, isSessionSummary: true, isRemediation: isSupportActivity, score: finalScore, totalQuestions: session.challenges.length });
     }
     setScore(finalScore);
     setFinished(true);
@@ -70,9 +82,6 @@ export default function ChallengePage() {
     const results = getActivityResults(activePlayer.id);
     const progression = node && !isSupportActivity ? getProgressionDecision(results, getEnglishPath(node.grade), node) : null;
 
-    // Support is an intervention. A developing learner stays on the current
-    // practice node until its mastery evidence is complete; only an `advance`
-    // decision moves to the next curriculum node.
     const destinationNode = isSupportActivity
       ? node
       : progression?.outcome === "support"
