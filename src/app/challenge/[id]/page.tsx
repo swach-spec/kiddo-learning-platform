@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { getChallengeSession } from "@/lib/challenge";
-import { getActivityResults, recordActivityResult } from "@/lib/player";
+import { getActivityResults, recordActivityResult, updateLearnerPosition } from "@/lib/player";
 import { usePlayer } from "@/hooks/usePlayer";
 import { Button } from "@/components/Button";
 import { WordHelper } from "@/components/WordHelper";
@@ -17,10 +17,7 @@ export default function ChallengePage() {
   const challengeId = Array.isArray(params.id) ? params.id[0] : params.id;
   const session = useMemo(() => getChallengeSession(challengeId), [challengeId]);
 
-  // The route identifies the challenge bank, not a question. The bank itself
-  // is shuffled, so every multi-question session always begins at question 1.
   const startIndex = 0;
-
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const curriculumNodeId = searchParams?.get("node") ?? null;
   const isSupportActivity = challengeId.startsWith("g2-support-") || searchParams?.get("support") === "1";
@@ -55,8 +52,10 @@ export default function ChallengePage() {
     if (!answered) return;
     if (index < session.challenges.length - 1) { setIndex((value) => value + 1); setSelected(null); return; }
 
-    // Include the final answer because React state updates are asynchronous.
-    const finalScore = score + (correct ? 1 : 0);
+    // `score` already includes the final answer because the Finish button is
+    // rendered after the answer state has committed. Do not add the final
+    // answer a second time; doing so produced impossible totals such as 9/8.
+    const finalScore = score;
     const passed = finalScore / session.challenges.length >= 0.7;
     const existingSummary = getActivityResults(activePlayer.id).some(
       (result) => result.activityId === session.completionActivityId
@@ -68,6 +67,31 @@ export default function ChallengePage() {
     if (!existingSummary) {
       recordActivityResult({ id: crypto.randomUUID(), playerId: activePlayer.id, activityType: "practice_challenge", activityId: session.completionActivityId, curriculumNodeId: curriculumNodeId ?? undefined, skills: [challenge.skill], curriculumId: challenge.curriculumId, strand: challenge.strand, subStrand: challenge.subStrand, concept: challenge.concept, correct: passed, attempts: session.challenges.length, hintsUsed: 0, difficulty: challenge.difficulty, xpAwarded: 0, timestamp: new Date().toISOString(), sessionId, isSessionSummary: true, isRemediation: isSupportActivity, score: finalScore, totalQuestions: session.challenges.length });
     }
+
+    // Save the learner's position at the point KIDDO is actually sending the
+    // learner. This keeps the home resume card aligned with the journey.
+    const results = getActivityResults(activePlayer.id);
+    const grade = Number(activePlayer.grade.match(/\d+/)?.[0] ?? 2);
+    const path = getEnglishPath(grade);
+    const node = curriculumNodeId ? path.find((item) => item.id === curriculumNodeId) ?? null : null;
+    if (node) {
+      const progression = !isSupportActivity ? getProgressionDecision(results, path, node) : null;
+      const destinationNode = isSupportActivity
+        ? node
+        : progression?.outcome === "support"
+          ? progression.node
+          : progression?.outcome === "advance"
+            ? progression.nextNode
+            : progression?.node;
+      if (destinationNode) {
+        updateLearnerPosition(activePlayer.id, {
+          currentSubject: destinationNode.subject,
+          currentCurriculumNodeId: destinationNode.id,
+          currentActivityId: destinationNode.activityId ?? destinationNode.id,
+        });
+      }
+    }
+
     setScore(finalScore);
     setFinished(true);
   }
