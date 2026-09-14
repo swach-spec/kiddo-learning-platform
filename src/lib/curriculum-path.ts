@@ -2,7 +2,7 @@ import { ActivityResult } from "@/types/activity";
 import { CurriculumNode, NextLearningDecision } from "@/types/curriculum-path";
 import { getOverallLearningState } from "@/lib/adaptive-learning";
 import { getEnglishPath } from "@/content/curriculum/english-path";
-import { meetsMasteryThreshold } from "@/lib/mastery";
+import { getMasteryPolicy, meetsMasteryThreshold } from "@/lib/mastery";
 
 function nodeEvidence(results: ActivityResult[], node: CurriculumNode) {
   const nodeSpecific = results.filter((result) => result.curriculumNodeId === node.id);
@@ -21,12 +21,25 @@ function nodeEvidence(results: ActivityResult[], node: CurriculumNode) {
 export function getNodeLearningState(results: ActivityResult[], node: CurriculumNode) {
   let evidence = nodeEvidence(results, node);
 
-  // Adaptive state for practice stages must be based on completed sessions,
-  // not question-level records. Otherwise one or two earlier failed questions
-  // can keep a learner in `needs_support` even after they consistently pass
-  // complete practice sessions.
   if (node.kind === "guided_practice" || node.kind === "independent_practice" || node.kind === "mastery") {
-    evidence = evidence.filter((result) => result.isSessionSummary === true);
+    evidence = evidence
+      .filter((result) => result.isSessionSummary === true)
+      .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+
+    if (!evidence.length) return "developing" as const;
+
+    // Remediation should respond to a current pattern of difficulty, not make
+    // an old failure permanently sticky. Two consecutive failed sessions are
+    // enough to trigger support. A passing session clears that remediation
+    // state and lets the learner keep building mastery evidence.
+    const latest = evidence[evidence.length - 1];
+    const previous = evidence[evidence.length - 2];
+    if (latest?.correct === false && previous?.correct === false) return "needs_support" as const;
+
+    const policy = getMasteryPolicy(node.kind);
+    if (policy && meetsMasteryThreshold(results, node.id, node.kind)) return "secure" as const;
+
+    return "developing" as const;
   }
 
   if (!evidence.length) return "developing" as const;
@@ -67,5 +80,5 @@ export function getNextLearningDecision(results: ActivityResult[], grade: number
   if (node.kind === "lesson") return { node, route: "main", action: "learn", reason: "This is the next required idea on your grade pathway." };
   if (node.kind === "mastery") return { node, route: "mastery", action: "challenge", reason: "You have reached a mastery checkpoint for this part of the pathway." };
   if (state === "secure") return { node, route: "acceleration", action: "challenge", reason: "You are showing strong understanding, so KIDDO can reduce repetition and give you a stronger task." };
-  return { node, route: "main", action: "practise", reason: "Practise this idea, then KIDDO will use your performance to decide what comes next." };
+  return { node, route: "main", action: "practise", reason: "Practise this idea, then KIDDO will use your performance to decide what you need next." };
 }
