@@ -28,12 +28,20 @@ export function getNodeLearningState(results: ActivityResult[], node: Curriculum
 
     if (!evidence.length) return "developing" as const;
 
+    // A remediation session is a reset point for the support decision. A
+    // successful support session clears the old failure streak; a failed one
+    // keeps the learner in support rather than silently sending them back to
+    // the same failing activity.
+    const latest = evidence[evidence.length - 1];
+    const previous = evidence[evidence.length - 2];
+    if (latest?.isRemediation === true) {
+      return latest.correct === true ? "developing" as const : "needs_support" as const;
+    }
+
     // Remediation should respond to a current pattern of difficulty, not make
     // an old failure permanently sticky. Two consecutive failed sessions are
     // enough to trigger support. A passing session clears that remediation
     // state and lets the learner keep building mastery evidence.
-    const latest = evidence[evidence.length - 1];
-    const previous = evidence[evidence.length - 2];
     if (latest?.correct === false && previous?.correct === false) return "needs_support" as const;
 
     const policy = getMasteryPolicy(node.kind);
