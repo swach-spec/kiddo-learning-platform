@@ -3,23 +3,39 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Player } from "@/lib/kiddo";
-import { getCurrentPlayer, getActivityResults } from "@/lib/player";
+import { getCurrentPlayer, getActivityResults, getLearnerProgress } from "@/lib/player";
 import { isLoggedIn } from "@/lib/auth";
 import { getAllStories } from "@/content";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { AdventurePaths } from "@/components/AdventurePaths";
 import { LearningJourney } from "@/components/LearningJourney";
 import { WordHelper } from "@/components/WordHelper";
+import { getNextActivityRecommendation, recordHomePrompt } from "@/lib/activity-balance";
+import { getCurrentLearningPosition } from "@/lib/guided-learning";
+import type { BalancedActivityRecommendation } from "@/lib/activity-balance";
+import type { LearnerProgress } from "@/lib/player";
+import type { CurriculumNode } from "@/types/curriculum-path";
 
 export default function Home() {
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recommendation, setRecommendation] = useState<BalancedActivityRecommendation | null>(null);
+  const [learnerProgress, setLearnerProgress] = useState<LearnerProgress | null>(null);
+  const [nextNode, setNextNode] = useState<CurriculumNode | null>(null);
 
   useEffect(() => {
     if (!isLoggedIn()) { window.location.href = "/login"; return; }
     const current = getCurrentPlayer();
     if (!current) { window.location.href = "/players"; return; }
-    setPlayer(current); setLoading(false);
+    setPlayer(current);
+    const progress = getLearnerProgress(current.id);
+    setLearnerProgress(progress);
+    const grade = Number(current.grade.replace(/\D/g, "")) || 2;
+    setNextNode(getCurrentLearningPosition(current.id, grade).node);
+    const next = getNextActivityRecommendation(current.id);
+    setRecommendation(next);
+    if (next) recordHomePrompt(next.activityId);
+    setLoading(false);
   }, []);
 
   if (loading || !player) return null;
@@ -30,6 +46,8 @@ export default function Home() {
   const storyForestProgress = readyStories.length === 0 ? 0 : Math.min(100, Math.round((player.completedStoryIds.length / readyStories.length) * 100));
   const numberWorldActivities = activityResults.filter((result) => result.activityId.startsWith("number-world-"));
   const numberWorldProgress = Math.min(100, Math.round((new Set(numberWorldActivities.map((result) => result.activityId)).size / 48) * 100));
+
+  const resume = getResumeDestination(learnerProgress, nextNode);
 
   return (
     <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
@@ -42,6 +60,24 @@ export default function Home() {
 
         <section className="mt-8"><div className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-600 p-7 shadow-2xl sm:p-9"><div className="max-w-2xl"><p className="inline-flex rounded-full bg-white/15 px-4 py-2 text-xs font-black uppercase tracking-widest backdrop-blur">🚀 Welcome, {player.name}!</p><h2 className="mt-4 text-4xl font-black leading-tight sm:text-5xl">Your next adventure<br /><span className="text-yellow-300">starts here.</span></h2><p className="mt-4 max-w-xl text-sm leading-6 text-white/75 sm:text-base">Choose a path and keep your learning balanced. KIDDO will guide you toward what to learn next.</p><Link href="#adventure-paths" className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-slate-900 shadow-lg transition hover:-translate-y-0.5 hover:bg-yellow-100">START HERE <span>→</span></Link></div></div></section>
 
+        {resume && (
+          <section className="mt-5 rounded-3xl border border-cyan-400/20 bg-cyan-400/5 p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{resume.eyebrow}</p><h2 className="mt-1 text-xl font-black">{resume.title}</h2><p className="mt-1 text-sm text-slate-400">{resume.description}</p></div>
+              <Link href={resume.href} className="shrink-0 rounded-2xl bg-cyan-300 px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-cyan-200">{resume.cta} →</Link>
+            </div>
+          </section>
+        )}
+
+        {recommendation && (
+          <section className="mt-5 rounded-3xl border border-yellow-400/20 bg-yellow-400/5 p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div><p className="text-xs font-black uppercase tracking-widest text-yellow-300">A smart next step</p><h2 className="mt-1 text-xl font-black">Try {recommendation.title}</h2><p className="mt-1 text-sm text-slate-400">{recommendation.description} KIDDO is mixing your paths so you keep growing.</p></div>
+              <Link href={recommendation.href} className="shrink-0 rounded-2xl bg-yellow-300 px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-yellow-200">Try it →</Link>
+            </div>
+          </section>
+        )}
+
         <div id="adventure-paths"><AdventurePaths /></div>
         <LearningJourney player={player} stories={stories} activityResults={activityResults} />
         <WordHelper className="mt-6" />
@@ -52,6 +88,25 @@ export default function Home() {
       </div>
     </main>
   );
+}
+
+function getResumeDestination(progress: LearnerProgress | null, nextNode: CurriculumNode | null) {
+  if (nextNode?.route) {
+    const saved = Boolean(progress?.currentCurriculumNodeId || progress?.currentActivityId);
+    const href = nextNode.kind === "guided_practice" || nextNode.kind === "independent_practice" || nextNode.kind === "mastery"
+      ? `${nextNode.route}?node=${encodeURIComponent(nextNode.id)}`
+      : nextNode.route;
+    return {
+      eyebrow: saved ? "Welcome back" : "Your next step",
+      title: saved ? `Continue: ${nextNode.title}` : `Start: ${nextNode.title}`,
+      description: saved ? "KIDDO saved your learning position. Pick up where you left off." : "KIDDO has chosen the next step on your grade pathway.",
+      href,
+      cta: saved ? "Continue" : "Start",
+    };
+  }
+  if (!progress?.currentSubject && !progress?.currentActivityId) return null;
+  if (progress.currentSubject === "mathematics") return { eyebrow: "Welcome back", title: "Continue your Maths adventure", description: "KIDDO saved your last learning position.", href: "/number-world-cbc", cta: "Continue" };
+  return { eyebrow: "Welcome back", title: "Continue your English adventure", description: "KIDDO saved your last learning position.", href: "/story", cta: "Continue" };
 }
 
 function StatCard({ icon, label, value, suffix }: { icon: string; label: string; value: string; suffix: string }) { return <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5"><p className="text-xs font-bold uppercase tracking-widest text-slate-500">{icon} {label}</p><div className="mt-2 flex items-end gap-2"><span className="text-3xl font-black">{value}</span><span className="mb-1 text-xs text-slate-500">{suffix}</span></div></div>; }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getCBCNumberWorldChallenges } from "@/content/number-world-cbc";
 import { getMathSkillInsights, getNextMathRecommendation } from "@/lib/math-learning";
-import { awardXP, getActivityResults, getCurrentPlayer, recordActivityResult } from "@/lib/player";
+import { awardXP, getActivityResults, getCurrentPlayer, recordActivityResult, updateLearnerPosition } from "@/lib/player";
 import { Player } from "@/lib/kiddo";
 import { Challenge } from "@/types/challenge";
 import { Grade } from "@/types/content";
@@ -50,6 +50,7 @@ export default function NumberWorldCBCPage() {
       return;
     }
     setPlayer(current);
+    updateLearnerPosition(current.id, { currentSubject: "mathematics", currentActivityId: "number-world-cbc" });
     setQuestions(createSession(getGrade(current.grade)));
     setStartedAt(Date.now());
   }, []);
@@ -65,6 +66,7 @@ export default function NumberWorldCBCPage() {
 
   function restart() {
     if (!player) return;
+    updateLearnerPosition(player.id, { currentSubject: "mathematics", currentActivityId: "number-world-cbc" });
     setQuestions(createSession(grade));
     setRound(0);
     setSelected(null);

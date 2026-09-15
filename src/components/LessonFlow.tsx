@@ -8,10 +8,12 @@ export function LessonFlow({
   lesson,
   completed,
   onComplete,
+  practiceHref,
 }: {
   lesson: Lesson;
   completed: boolean;
   onComplete: () => void;
+  practiceHref: string;
 }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [tryAnswer, setTryAnswer] = useState<string | null>(null);
@@ -166,22 +168,31 @@ export function LessonFlow({
                 ← Back
               </button>
             )}
-            <button
-              onClick={next}
-              disabled={step.type === "try" && !tryAnswer}
-              className="flex-1 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-6 py-4 font-black text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {step.type === "try" && !tryChecked
-                ? "Check Answer"
-                : isLast
-                  ? completed ? "Go to Practice →" : "Finish Lesson →"
-                  : "Continue →"}
-            </button>
+            {isLast && completed ? (
+              <Link
+                href={practiceHref}
+                className="flex-1 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-6 py-4 text-center font-black text-slate-950 transition hover:-translate-y-0.5 hover:from-cyan-300 hover:to-blue-400"
+              >
+                Go to Practice →
+              </Link>
+            ) : (
+              <button
+                onClick={next}
+                disabled={step.type === "try" && !tryAnswer}
+                className="flex-1 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-6 py-4 font-black text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {step.type === "try" && !tryChecked
+                  ? "Check Answer"
+                  : isLast
+                    ? "Finish Lesson →"
+                    : "Continue →"}
+              </button>
+            )}
           </div>
 
           {completed && isLast && (
             <div className="mt-4 text-center">
-              <Link href={`/challenge/${lesson.challengeId ?? "demo-adjective-describing-word"}`} className="text-sm font-bold text-cyan-300 hover:text-cyan-200">
+              <Link href={practiceHref} className="text-sm font-bold text-cyan-300 hover:text-cyan-200">
                 Skip straight to the practice challenge →
               </Link>
             </div>

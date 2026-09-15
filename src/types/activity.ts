@@ -13,6 +13,7 @@ export type ActivityResult = {
   playerId: string;
   activityType: ActivityType;
   activityId: string;
+  curriculumNodeId?: string;
   storyId?: string;
   skills: Skill[];
   curriculumId?: string;
@@ -26,4 +27,12 @@ export type ActivityResult = {
   difficulty?: 1 | 2 | 3;
   xpAwarded: number;
   timestamp: string;
+  /** Identifies all question-level evidence belonging to one learning session. */
+  sessionId?: string;
+  /** Present on a single session-summary result used for mastery decisions. */
+  isSessionSummary?: boolean;
+  /** Marks a support/remediation session so it can influence learning state without counting as mastery evidence. */
+  isRemediation?: boolean;
+  score?: number;
+  totalQuestions?: number;
 };

@@ -1,5 +1,6 @@
 import { DEFAULT_GRADE_ENTRY_TIERS, GAME_GRADE_ENTRY_TIERS, GAME_TIERS } from "@/content/game-progression";
 import { GameProgress, GameTierId, TierStats } from "@/types/game-progress";
+import { recordActivityCompletion } from "@/lib/activity-balance";
 
 const STORAGE_KEY = "kiddo-game-progress";
 
@@ -76,6 +77,7 @@ export function recordGameResult(playerId: string, gameId: string, grade: string
 
   const next: GameProgress = { gameId, playerId, gradeEntry: getGradeNumber(grade), currentTier, wins, losses, attempts, masteryScore, highestTier, tierStats };
   writeProgress(readProgress().filter((item) => !(item.playerId === playerId && item.gameId === gameId)).concat(next));
+  recordActivityCompletion(`${gameId}`);
   return next;
 }
 

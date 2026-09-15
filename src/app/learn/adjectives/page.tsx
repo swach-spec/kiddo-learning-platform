@@ -7,6 +7,14 @@ import { LessonFlow } from "@/components/LessonFlow";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { usePlayer } from "@/hooks/usePlayer";
 import { getActivityResults, recordActivityResult } from "@/lib/player";
+import { getEnglishPath } from "@/content/curriculum/english-path";
+import { Grade } from "@/types/content";
+
+function getGrade(value: string): Grade {
+  const match = value.match(/\d+/);
+  const grade = match ? Number(match[0]) : 1;
+  return Math.min(6, Math.max(1, grade)) as Grade;
+}
 
 export default function AdjectivesLessonPage() {
   const { player, loading, awardXP } = usePlayer();
@@ -20,9 +28,11 @@ export default function AdjectivesLessonPage() {
       return;
     }
 
-    const lesson = getAdjectiveLesson(player.grade as 1 | 2 | 3 | 4 | 5 | 6);
+    const grade = getGrade(player.grade);
+    const lesson = getAdjectiveLesson(grade);
+    const lessonNode = getEnglishPath(grade).find((node) => node.kind === "lesson");
     const alreadyCompleted = getActivityResults(player.id).some(
-      (result) => result.activityType === "lesson" && result.activityId === lesson.id
+      (result) => result.activityType === "lesson" && (result.curriculumNodeId === lessonNode?.id || result.activityId === lesson.id)
     );
     setCompleted(alreadyCompleted);
     setSaved(alreadyCompleted);
@@ -30,8 +40,10 @@ export default function AdjectivesLessonPage() {
 
   if (loading || !player) return null;
 
-  const grade = Number(player.grade.replace(/\D/g, "")) as 1 | 2 | 3 | 4 | 5 | 6;
+  const grade = getGrade(player.grade);
   const lesson = getAdjectiveLesson(grade);
+  const guidedNode = getEnglishPath(grade).find((node) => node.kind === "guided_practice");
+  const practiceHref = `/challenge/${lesson.challengeId ?? "demo-adjective-describing-word"}${guidedNode ? `?node=${encodeURIComponent(guidedNode.id)}` : ""}`;
 
   function completeLesson() {
     if (!player || saved) {
@@ -39,11 +51,13 @@ export default function AdjectivesLessonPage() {
       return;
     }
 
+    const lessonNode = getEnglishPath(grade).find((node) => node.kind === "lesson");
     recordActivityResult({
       id: crypto.randomUUID(),
       playerId: player.id,
       activityType: "lesson",
       activityId: lesson.id,
+      curriculumNodeId: lessonNode?.id,
       skills: [lesson.skill],
       correct: true,
       attempts: 1,
@@ -61,47 +75,12 @@ export default function AdjectivesLessonPage() {
     <main className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto min-h-screen max-w-5xl px-5 py-6 sm:px-8">
         <header className="flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-xl hover:bg-white/10"
-          >
-            ←
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <PlayerAvatar avatar={player.avatar} size="sm" />
-            <div className="hidden sm:block">
-              <p className="text-xs text-slate-500">Learning</p>
-              <p className="text-sm font-black">{player.name}</p>
-            </div>
-          </div>
+          <Link href="/" className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-xl hover:bg-white/10">←</Link>
+          <div className="flex items-center gap-3"><PlayerAvatar avatar={player.avatar} size="sm" /><div className="hidden sm:block"><p className="text-xs text-slate-500">Learning</p><p className="text-sm font-black">{player.name}</p></div></div>
         </header>
-
-        <div className="mt-6 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3">
-          <div>
-            <p className="text-xs font-black uppercase tracking-widest text-slate-500">Today&apos;s lesson</p>
-            <p className="mt-1 text-sm font-bold">Grade {grade} English</p>
-          </div>
-          <p className="font-black text-yellow-300">+{lesson.xp} XP</p>
-        </div>
-
-        <LessonFlow lesson={lesson} completed={completed} onComplete={completeLesson} />
-
-        {completed && (
-          <div className="mt-6 rounded-[2rem] border border-emerald-400/20 bg-emerald-500/10 p-6 text-center">
-            <p className="text-sm font-black uppercase tracking-widest text-emerald-300">Lesson complete</p>
-            <h2 className="mt-2 text-2xl font-black">Now let&apos;s practise it.</h2>
-            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-400">
-              You learned the idea first. Your next step is to use it in a challenge.
-            </p>
-            <Link
-              href={`/challenge/${lesson.challengeId ?? "demo-adjective-describing-word"}`}
-              className="mt-5 inline-flex rounded-2xl bg-white px-7 py-4 font-black text-slate-950 hover:bg-yellow-300"
-            >
-              Start Practice →
-            </Link>
-          </div>
-        )}
+        <div className="mt-6 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3"><div><p className="text-xs font-black uppercase tracking-widest text-slate-500">Today&apos;s lesson</p><p className="mt-1 text-sm font-bold">Grade {grade} English</p></div><p className="font-black text-yellow-300">+{lesson.xp} XP</p></div>
+        <LessonFlow lesson={lesson} completed={completed} onComplete={completeLesson} practiceHref={practiceHref} />
+        {completed && <div className="mt-6 rounded-[2rem] border border-emerald-400/20 bg-emerald-500/10 p-6 text-center"><p className="text-sm font-black uppercase tracking-widest text-emerald-300">Lesson complete</p><h2 className="mt-2 text-2xl font-black">Now let&apos;s practise it.</h2><p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-400">You learned the idea first. Your next step is to use it in a challenge.</p><Link href={practiceHref} className="mt-5 inline-flex rounded-2xl bg-white px-7 py-4 font-black text-slate-950 hover:bg-yellow-300">Start Practice →</Link></div>}
       </div>
     </main>
   );
