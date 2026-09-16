@@ -33,7 +33,7 @@ export type LearnerRepository = {
 };
 
 export type ActivityRepository = {
-  recordResult(result: ActivityResult): void;
+  recordResult(result: ActivityResult): boolean;
   getResults(playerId: string): ActivityResult[];
   getResultsForActivity(playerId: string, activityId: string): ActivityResult[];
 };

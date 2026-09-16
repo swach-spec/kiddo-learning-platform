@@ -123,7 +123,9 @@ const learners: LearnerRepository = {
 const activities: ActivityRepository = {
   recordResult(result) {
     const existing = readJSON<ActivityResult[]>(ACTIVITY_RESULTS_KEY) ?? [];
+    if (existing.some((candidate) => candidate.id === result.id)) return false;
     writeJSON(ACTIVITY_RESULTS_KEY, [...existing, result]);
+    return true;
   },
 
   getResults(playerId) {

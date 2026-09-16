@@ -11,7 +11,7 @@ import { AdventurePaths } from "@/components/AdventurePaths";
 import { LearningJourney } from "@/components/LearningJourney";
 import { WordHelper } from "@/components/WordHelper";
 import { getNextActivityRecommendation, recordHomePrompt } from "@/lib/activity-balance";
-import { getCurrentLearningPosition } from "@/lib/guided-learning";
+import { getAuthoritativeNextAction } from "@/lib/guided-learning";
 import type { BalancedActivityRecommendation } from "@/lib/activity-balance";
 import type { LearnerProgress } from "@/lib/player";
 import type { CurriculumNode } from "@/types/curriculum-path";
@@ -31,7 +31,7 @@ export default function Home() {
     const progress = getLearnerProgress(current.id);
     setLearnerProgress(progress);
     const grade = Number(current.grade.replace(/\D/g, "")) || 2;
-    setNextNode(getCurrentLearningPosition(current.id, grade).node);
+    setNextNode(getAuthoritativeNextAction(current.id, grade)?.node ?? null);
     const next = getNextActivityRecommendation(current.id);
     setRecommendation(next);
     if (next) recordHomePrompt(next.activityId);
@@ -93,9 +93,7 @@ export default function Home() {
 function getResumeDestination(progress: LearnerProgress | null, nextNode: CurriculumNode | null) {
   if (nextNode?.route) {
     const saved = Boolean(progress?.currentCurriculumNodeId || progress?.currentActivityId);
-    const href = nextNode.kind === "guided_practice" || nextNode.kind === "independent_practice" || nextNode.kind === "mastery"
-      ? `${nextNode.route}?node=${encodeURIComponent(nextNode.id)}`
-      : nextNode.route;
+    const href = `${nextNode.route}${nextNode.route.includes("?") ? "&" : "?"}node=${encodeURIComponent(nextNode.id)}`;
     return {
       eyebrow: saved ? "Welcome back" : "Your next step",
       title: saved ? `Continue: ${nextNode.title}` : `Start: ${nextNode.title}`,

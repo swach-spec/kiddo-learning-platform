@@ -65,7 +65,8 @@ export function markStoryCompleted(playerId: string, storyId: string): Player | 
 }
 
 export function recordActivityResult(result: ActivityResult) {
-  repositories.activities.recordResult(result);
+  const recorded = repositories.activities.recordResult(result);
+  if (!recorded) return false;
 
   const now = new Date().toISOString();
   const previous = repositories.progress.getActivityProgress(result.playerId, result.activityId);
@@ -103,6 +104,7 @@ export function recordActivityResult(result: ActivityResult) {
     lastActivityId: result.activityId,
     updatedAt: now,
   });
+  return true;
 }
 
 export function getActivityResults(playerId: string): ActivityResult[] {

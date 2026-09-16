@@ -1,0 +1,6 @@
+export type LearningAttempt = { id:string; playerId:string; nodeId:string; activityId:string; status:"in_progress"|"completed"; startedAt:string; completedAt?:string };
+const KEY="kiddo-learning-attempts";
+function read(): LearningAttempt[]{if(typeof window==="undefined")return [];try{return JSON.parse(window.localStorage.getItem(KEY)??"[]") as LearningAttempt[]}catch{return []}}
+function write(items:LearningAttempt[]){if(typeof window!=="undefined")window.localStorage.setItem(KEY,JSON.stringify(items));}
+export function getOrStartLearningAttempt(playerId:string,nodeId:string,activityId:string,replay=false):LearningAttempt {const items=read();if(!replay){const prior=items.find(item=>item.playerId===playerId&&item.nodeId===nodeId&&item.activityId===activityId);if(prior)return prior;}const attempt={id:crypto.randomUUID(),playerId,nodeId,activityId,status:"in_progress" as const,startedAt:new Date().toISOString()};write([...items,attempt]);return attempt;}
+export function completeLearningAttempt(id:string){const items=read();write(items.map(item=>item.id===id?{...item,status:"completed" as const,completedAt:item.completedAt??new Date().toISOString()}:item));}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getStoryById } from "@/content";
 import { usePlayer } from "@/hooks/usePlayer";
@@ -10,13 +10,18 @@ import { recordActivityResult } from "@/lib/player";
 import { getChallengeForQuestion } from "@/lib/challenge";
 import { Button } from "@/components/Button";
 import { WordHelper } from "@/components/WordHelper";
+import { SessionAnswer } from "@/lib/learning-completion";
+import { isCurriculumLaunch, prepareCurriculumAttempt, submitCurriculumCompletion } from "@/lib/learning-session-flow";
 
 export default function StoryPage() {
   const params = useParams<{ id: string }>();
   const storyId = Array.isArray(params.id) ? params.id[0] : params.id;
   const story = getStoryById(storyId);
+  const searchParams = useSearchParams();
+  const curriculumNodeId = searchParams.get("node");
+  const replay = searchParams.get("replay") === "1";
 
-  const { player, loading: playerLoading, awardXP, markStoryCompleted } =
+  const { player, loading: playerLoading, awardXP, markStoryCompleted, refresh } =
     usePlayer();
 
   useEffect(() => {
@@ -45,6 +50,9 @@ export default function StoryPage() {
   const [showResult, setShowResult] = useState(false);
   const [earnedXp, setEarnedXp] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [answers, setAnswers] = useState<SessionAnswer[]>([]);
+  const [completion, setCompletion] = useState<ReturnType<typeof submitCurriculumCompletion> | null>(null);
+  const attempt = useMemo(() => player && isCurriculumLaunch(curriculumNodeId) ? prepareCurriculumAttempt(player.id, curriculumNodeId, storyId, replay) : null, [player, curriculumNodeId, storyId, replay]);
 
   if (!story) {
     return (
@@ -95,10 +103,13 @@ export default function StoryPage() {
     );
   }
 
-  if (playerLoading || !player) {
+  if (playerLoading || !player || (isCurriculumLaunch(curriculumNodeId) && !attempt)) {
     return null;
   }
 
+  const activePlayer = player;
+  const activeStory = story;
+  const curriculumNextHref = completion?.nextAction?.node.route ? `${completion.nextAction.node.route}?node=${encodeURIComponent(completion.nextAction.node.id)}` : null;
   const readingFinished = scene >= story.scenes.length;
   const currentQuestion = questions[question];
   const relatedChallenge = currentQuestion
@@ -110,7 +121,7 @@ export default function StoryPage() {
 
     const isLastScene = scene === story!.scenes.length - 1;
 
-    if (isLastScene) {
+    if (isLastScene && !isCurriculumLaunch(curriculumNodeId)) {
       recordActivityResult({
         id: crypto.randomUUID(),
         playerId: player.id,
@@ -140,8 +151,9 @@ export default function StoryPage() {
     if (correct) {
       setEarnedXp((current) => current + currentQuestion.xp);
     }
+    setAnswers((current) => [...current, { questionId: currentQuestion.id, correct, xp: currentQuestion.xp, skills: currentQuestion.skills, difficulty: currentQuestion.difficulty }]);
 
-    recordActivityResult({
+    if (!isCurriculumLaunch(curriculumNodeId)) recordActivityResult({
       id: crypto.randomUUID(),
       playerId: player.id,
       activityType: "story_question",
@@ -163,9 +175,16 @@ export default function StoryPage() {
       setSelectedOptionId(null);
       setShowResult(false);
     } else {
+      if (isCurriculumLaunch(curriculumNodeId) && attempt) {
+        const result = submitCurriculumCompletion({ playerId: activePlayer.id, grade: Number(activePlayer.grade.match(/\d+/)?.[0] ?? 2), nodeId: curriculumNodeId, routeId: activeStory.id, sessionId: attempt!.id, answers, story: true });
+        setCompletion(result);
+        setEarnedXp(result.xpAwarded);
+        refresh();
+      } else {
+        awardXP(earnedXp);
+        markStoryCompleted(story!.id);
+      }
       setFinished(true);
-      awardXP(earnedXp);
-      markStoryCompleted(story!.id);
     }
   }
 
@@ -432,10 +451,10 @@ export default function StoryPage() {
                 </Link>
 
                 <Link
-                  href="/"
+                  href={curriculumNextHref ?? "/"}
                   className="flex-1 rounded-2xl bg-white py-4 text-center font-black text-indigo-700 hover:bg-yellow-300"
                 >
-                  See My Progress ⭐
+                  {curriculumNextHref ? "Continue Learning →" : "See My Progress ⭐"}
                 </Link>
               </div>
 

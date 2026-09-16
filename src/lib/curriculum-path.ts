@@ -59,7 +59,7 @@ export function isNodeComplete(results: ActivityResult[], node: CurriculumNode):
   const evidence = nodeEvidence(results, node);
   if (!evidence.length) return false;
   if (node.kind === "lesson") return evidence.some((result) => result.correct === true);
-  if (node.kind === "story") return evidence.some((result) => result.activityType === "story_reading");
+  if (node.kind === "story") { const sessions = getPracticeSessionEvidence(results, node.id); const latest = [...sessions].reverse().find((result) => result.isRemediation !== true); return evidence.some((result) => result.activityType === "story_reading") && Boolean(latest && latest.totalQuestions && latest.score !== undefined && latest.score / latest.totalQuestions >= 0.6); }
   if (node.kind === "guided_practice" || node.kind === "independent_practice" || node.kind === "mastery") {
     const sessions = getPracticeSessionEvidence(results, node.id);
     const latestNonRemediation = [...sessions].reverse().find((result) => result.isRemediation !== true);
