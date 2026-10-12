@@ -8,6 +8,7 @@ import { applyMove, CheckersBoard, CheckersMove, CheckersPlayer, createInitialBo
 import { getGameProgress, getGameTiers, getNextGameTier, recordGameResult } from "@/lib/game-progression";
 import { GameProgress } from "@/types/game-progress";
 import { GameResultCard } from "@/components/games/GameResultCard";
+import { timestampedId } from "@/lib/clock";
 
 const GAME_XP = 50;
 const GAME_ID = "checkers-v1";
@@ -59,7 +60,7 @@ export default function CheckersPage() {
     const nextProgress = recordGameResult(player.id, GAME_ID, player.grade, result); setGameProgress(nextProgress);
     if (result !== "won" || rewarded) return;
     awardXP(player.id, GAME_XP);
-    recordActivityResult({ id: `checkers-${player.id}-${Date.now()}`, playerId: player.id, activityType: "checkers", activityId: GAME_ID, skills: [], correct: true, attempts: finalMoves, hintsUsed: 0, difficulty: 1, xpAwarded: GAME_XP, timestamp: new Date().toISOString() });
+    recordActivityResult({ id: timestampedId("checkers", player.id), playerId: player.id, activityType: "checkers", activityId: GAME_ID, skills: [], correct: true, attempts: finalMoves, hintsUsed: 0, difficulty: 1, xpAwarded: GAME_XP, timestamp: new Date().toISOString() });
     setRewarded(true);
   }
   function evaluatePosition(nextBoard: CheckersBoard, nextTurn: CheckersPlayer, moveCount = moves) {

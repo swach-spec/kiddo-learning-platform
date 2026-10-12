@@ -7,6 +7,7 @@ import { awardXP, getActivityResults, getCurrentPlayer, recordActivityResult } f
 import { getGameProgress, getGameTiers, getNextGameTier, recordGameResult } from "@/lib/game-progression";
 import { GameProgress } from "@/types/game-progress";
 import { GameResultCard } from "@/components/games/GameResultCard";
+import { timestampedId } from "@/lib/clock";
 
 type Card = { id: string; pairId: string; content: string };
 
@@ -74,7 +75,7 @@ export default function MemoryMatchPage() {
     setGameProgress(nextProgress);
     if (rewarded) return;
     awardXP(player.id, GAME_XP);
-    recordActivityResult({ id: `memory-match-${player.id}-${Date.now()}`, playerId: player.id, activityType: "memory_match", activityId: GAME_ID, skills: ["vocabulary"], correct: true, attempts: moves + 1, hintsUsed: 0, xpAwarded: GAME_XP, timestamp: new Date().toISOString() });
+    recordActivityResult({ id: timestampedId("memory-match", player.id), playerId: player.id, activityType: "memory_match", activityId: GAME_ID, skills: ["vocabulary"], correct: true, attempts: moves + 1, hintsUsed: 0, xpAwarded: GAME_XP, timestamp: new Date().toISOString() });
     setRewarded(true);
   }
 

@@ -8,6 +8,7 @@ import { Player } from "@/lib/kiddo";
 import { awardXP, getActivityResults, getCurrentPlayer, recordActivityResult } from "@/lib/player";
 import { getNumberWorldChallenges } from "@/content/number-world";
 import { getMathLearningContext, getMathSkillInsights, getNextMathRecommendation } from "@/lib/math-learning";
+import { nowMs } from "@/lib/clock";
 
 const SESSION_SIZE = 8;
 const XP_PER_QUESTION = 10;
@@ -54,7 +55,7 @@ export default function NumberWorldPage() {
     }
     setPlayer(current);
     setQuestions(createSession(current.grade));
-    setQuestionStartedAt(Date.now());
+    setQuestionStartedAt(nowMs());
   }, []);
 
   const currentQuestion = questions[round];
@@ -81,7 +82,7 @@ export default function NumberWorldPage() {
     setComplete(false);
     setAnsweredIds(new Set());
     setSessionResults([]);
-    setQuestionStartedAt(Date.now());
+    setQuestionStartedAt(nowMs());
   }
 
   function chooseAnswer(optionId: string) {
@@ -94,7 +95,7 @@ export default function NumberWorldPage() {
         result.activityId === currentQuestion.id &&
         result.xpAwarded > 0
     );
-    const responseTimeMs = Math.max(0, Date.now() - questionStartedAt);
+    const responseTimeMs = Math.max(0, nowMs() - questionStartedAt);
     const context = getMathLearningContext(grade, currentQuestion.skill);
 
     setSelected(optionId);
@@ -137,7 +138,7 @@ export default function NumberWorldPage() {
         setRound((current) => current + 1);
         setSelected(null);
         setAnswerState(null);
-        setQuestionStartedAt(Date.now());
+        setQuestionStartedAt(nowMs());
       }
     }, 700);
   }
@@ -257,7 +258,7 @@ export default function NumberWorldPage() {
               <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-5">
                 <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">KIDDO recommendation</p>
                 <p className="mt-2 font-black text-white">{recommendation}</p>
-                <p className="mt-1 text-sm text-slate-400">This is the beginning of KIDDO's learner-guidance layer. As more evidence is collected, recommendations can become increasingly targeted.</p>
+                <p className="mt-1 text-sm text-slate-400">This is the beginning of KIDDO&apos;s learner-guidance layer. As more evidence is collected, recommendations can become increasingly targeted.</p>
               </div>
             )}
 

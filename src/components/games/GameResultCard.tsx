@@ -92,7 +92,7 @@ export function GameResultCard({
 
           {won && rewardClaimed && (
             <p className="mt-4 rounded-2xl bg-emerald-400/10 px-4 py-3 font-bold text-emerald-300">
-              ⭐ You've already earned the XP for this game. Keep playing to improve your skills!
+              ⭐ You&apos;ve already earned the XP for this game. Keep playing to improve your skills!
             </p>
           )}
 

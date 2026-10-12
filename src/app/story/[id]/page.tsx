@@ -52,7 +52,8 @@ export default function StoryPage() {
   const [finished, setFinished] = useState(false);
   const [answers, setAnswers] = useState<SessionAnswer[]>([]);
   const [completion, setCompletion] = useState<ReturnType<typeof submitCurriculumCompletion> | null>(null);
-  const attempt = useMemo(() => player && isCurriculumLaunch(curriculumNodeId) ? prepareCurriculumAttempt(player.id, curriculumNodeId, storyId, replay) : null, [player, curriculumNodeId, storyId, replay]);
+  const playerId = player?.id ?? null;
+  const attempt = useMemo(() => playerId && isCurriculumLaunch(curriculumNodeId) ? prepareCurriculumAttempt(playerId, curriculumNodeId, storyId, replay) : null, [playerId, curriculumNodeId, storyId, replay]);
 
   if (!story) {
     return (

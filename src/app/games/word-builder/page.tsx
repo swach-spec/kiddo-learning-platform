@@ -10,6 +10,7 @@ import { GameResultCard } from "@/components/games/GameResultCard";
 import { getWordBuilderWords, WordBuilderWord } from "@/content/games/word-builder";
 import { getExtraWordBuilderWords } from "@/content/games/word-builder-expansion";
 import { getWordChallengeQuestions, WordChallengeQuestion, WordChallengeMode } from "@/content/games/word-challenge-modes";
+import { timestampedId } from "@/lib/clock";
 
 const GAME_ID = "word-builder-v1";
 const GAME_XP = 50;
@@ -190,7 +191,7 @@ export default function WordBuilderPage() {
     if (!won || rewarded) return;
     awardXP(player.id, GAME_XP);
     recordActivityResult({
-      id: `word-builder-${player.id}-${Date.now()}`,
+      id: timestampedId("word-builder", player.id),
       playerId: player.id,
       activityType: "practice_challenge",
       activityId: GAME_ID,
