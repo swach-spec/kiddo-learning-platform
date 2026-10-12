@@ -3,6 +3,7 @@ import { getActivityResults, getCurrentPlayer, recordActivityResult } from "@/li
 import { getAuthoritativeNextAction } from "@/lib/guided-learning";
 import { FREE_PRACTICE_NODE, prepareCurriculumAttempt, submitCurriculumCompletion } from "@/lib/learning-session-flow";
 import { getChallengeSession } from "@/lib/challenge";
+import { getStoryById } from "@/content";
 
 const store = new Map<string, string>();
 const localStorage = {
@@ -90,5 +91,28 @@ describe("free practice (no curriculum node)", () => {
     expect(submitCurriculumCompletion(request).status).toBe("duplicate");
     expect(getCurrentPlayer()?.xp).toBe(xp);
     expect(playThroughPage(null, routeId, 1).status).toBe("completed");
+  });
+});
+
+describe("weak story → support → back to the story (no endless support loop)", () => {
+  beforeEach(setup);
+
+  function playStory(correctCount: number) {
+    const story = getStoryById("benchmark-grade-2-the-garden-clock")!;
+    const attempt = prepareCurriculumAttempt("p", "g2-reading-describing", story.id);
+    return submitCurriculumCompletion({ playerId: "p", grade: 2, nodeId: "g2-reading-describing", routeId: story.id, sessionId: attempt.id, story: true, answers: story.questions.map((q, i) => ({ questionId: q.id, correct: i < correctCount, xp: q.xp, skills: q.skills, difficulty: q.difficulty })) });
+  }
+
+  it("returns the learner to the story after a passed support activity, then moves on after a strong read", () => {
+    playThroughPage("g2-describing-guided", "g2-guided-1", 8);
+    playThroughPage("g2-describing-independent", "g2-independent-1", 8);
+    expect(playStory(1).nextAction?.route).toBe("remediation");
+
+    const support = playThroughPage("g2-reading-describing", "g2-support-1", 6);
+    expect(support.status).toBe("completed");
+    expect(getAuthoritativeNextAction("p", 2)?.node.id).toBe("g2-reading-describing");
+    expect(getAuthoritativeNextAction("p", 2)?.route).toBe("main");
+
+    expect(playStory(5).nextAction?.node.id).toBe("g2-composition-describing");
   });
 });

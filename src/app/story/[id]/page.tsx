@@ -111,6 +111,7 @@ export default function StoryPage() {
   const activePlayer = player;
   const activeStory = story;
   const curriculumNextHref = completion?.nextAction?.node.route ? `${completion.nextAction.node.route}?node=${encodeURIComponent(completion.nextAction.node.id)}` : null;
+  const needsStoryPractice = completion?.nextAction?.route === "remediation";
   const readingFinished = scene >= story.scenes.length;
   const currentQuestion = questions[question];
   const relatedChallenge = currentQuestion
@@ -406,19 +407,22 @@ export default function StoryPage() {
 
             <div className="mx-auto max-w-2xl rounded-[2rem] border border-white/10 bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-600 p-8 sm:p-12">
 
-              <div className="text-7xl">🏆</div>
+              {/* Finishing a story is always celebrated, but weak comprehension is
+                  never presented as mastery: the wording follows KIDDO's decision. */}
+              <div className="text-7xl">{needsStoryPractice ? "📖" : "🏆"}</div>
 
               <p className="mt-6 text-sm font-bold uppercase tracking-widest text-yellow-300">
                 Story Complete!
               </p>
 
               <h2 className="mt-2 text-4xl font-black">
-                Amazing work!
+                {needsStoryPractice ? "Well read!" : "Amazing work!"}
               </h2>
 
               <p className="mx-auto mt-4 max-w-md text-white/70">
-                You finished {story.title} and completed the reading
-                challenge.
+                {needsStoryPractice
+                  ? `You finished ${story.title}. Some questions were tricky, so KIDDO has a short practice to help before you read it again.`
+                  : `You finished ${story.title} and completed the reading challenge.`}
               </p>
 
               <div className="mx-auto mt-8 flex max-w-sm justify-center gap-4">

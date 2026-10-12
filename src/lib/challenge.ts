@@ -4,13 +4,15 @@ import { numberWorldChallenges } from "@/content/number-world";
 import { NUMBER_WORLD_CBC_BANK } from "@/content/number-world-cbc";
 import { grade2DescribingGuided, grade2DescribingIndependent, grade2SentenceBuilder, grade2DescribingMastery } from "@/content/challenges/grade-2-english";
 import { grade2DescribingSupport } from "@/content/challenges/grade-2-english-support";
+import { getAllUnitChallenges, getUnitBank } from "@/content/units";
+import { parseUnitSessionId } from "@/lib/unit-path";
 import { ActivityResult } from "@/types/activity";
 import { Challenge } from "@/types/challenge";
 import { PartOfSpeech, Question, Skill, Story } from "@/types/content";
 
 const allChallenges: Challenge[] = [...vocabularyChallenges, ...mathsChallenges, ...numberWorldChallenges, ...NUMBER_WORLD_CBC_BANK, ...grade2DescribingGuided, ...grade2DescribingIndependent, ...grade2SentenceBuilder, ...grade2DescribingMastery, ...grade2DescribingSupport];
 
-export function getChallengeById(id: string): Challenge | undefined { return allChallenges.find((challenge) => challenge.id === id); }
+export function getChallengeById(id: string): Challenge | undefined { return allChallenges.find((challenge) => challenge.id === id) ?? getAllUnitChallenges().find((challenge) => challenge.id === id); }
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -35,6 +37,8 @@ function prepareSession(challenges: Challenge[], completionActivityId: string) {
 }
 
 export function getChallengeSession(id: string): { challenges: Challenge[]; completionActivityId: string } {
+  const unitSession = parseUnitSessionId(id);
+  if (unitSession) return prepareSession(getUnitBank(unitSession.unitId, unitSession.stage), id);
   if (id.startsWith("g2-guided-")) return prepareSession(grade2DescribingGuided, "g2-describing-guided");
   if (id.startsWith("g2-independent-")) return prepareSession(grade2DescribingIndependent, "g2-describing-independent");
   if (id.startsWith("g2-sentence-")) return prepareSession(grade2SentenceBuilder, "g2-sentence-builder");

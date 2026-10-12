@@ -1,7 +1,7 @@
 import { ActivityResult } from "@/types/activity";
 import { CurriculumNode, NextLearningDecision } from "@/types/curriculum-path";
 import { getOverallLearningState } from "@/lib/adaptive-learning";
-import { getEnglishPath } from "@/content/curriculum/english-path";
+import { getLearningPath } from "@/content/curriculum/learning-path";
 import { getMasteryPolicy, meetsMasteryThreshold } from "@/lib/mastery";
 
 function nodeEvidence(results: ActivityResult[], node: CurriculumNode) {
@@ -9,6 +9,9 @@ function nodeEvidence(results: ActivityResult[], node: CurriculumNode) {
   if (nodeSpecific.length) return nodeSpecific;
 
   if (node.kind === "guided_practice" || node.kind === "independent_practice" || node.kind === "mastery") return [];
+  // Unit steps ("<unit>--<step>") only accept evidence recorded against them;
+  // the legacy id matching below exists for the original Describing Words paths.
+  if (node.id.includes("--")) return [];
 
   const legacyLessonIds = [`english-g${node.grade}-describing-words`, `english-g${node.grade}-adjectives`];
   return results.filter((result) => result.activityId === node.activityId || result.activityId === node.id || (node.kind === "lesson" && legacyLessonIds.includes(result.activityId)));
@@ -50,6 +53,18 @@ export function getNodeLearningState(results: ActivityResult[], node: Curriculum
     return "developing" as const;
   }
 
+  if (node.kind === "story") {
+    // Judge a reading step by its latest SESSION, like practice steps. Summing
+    // every story answer ever given kept old wrong answers counting forever, so a
+    // learner who passed the support activity was sent straight back to support.
+    const sessions = getPracticeSessionEvidence(results, node.id);
+    const latest = sessions[sessions.length - 1];
+    if (latest) {
+      if (latest.isRemediation === true) return latest.correct === true ? "developing" as const : "needs_support" as const;
+      return latest.correct === false ? "needs_support" as const : "developing" as const;
+    }
+  }
+
   if (!evidence.length) return "developing" as const;
   const skills = [...new Set(evidence.flatMap((result) => result.skills))];
   return getOverallLearningState(evidence, skills);
@@ -79,7 +94,7 @@ export function getNextCurriculumNode(results: ActivityResult[], path: Curriculu
 }
 
 export function getNextLearningDecision(results: ActivityResult[], grade: number): NextLearningDecision | null {
-  const node = getNextCurriculumNode(results, getEnglishPath(grade));
+  const node = getNextCurriculumNode(results, getLearningPath(grade));
   if (!node) return null;
   const state = getNodeLearningState(results, node);
 

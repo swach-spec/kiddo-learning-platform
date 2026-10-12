@@ -1,4 +1,4 @@
-import { Grade } from "@/types/content";
+import { Grade, Skill } from "@/types/content";
 
 export type LessonStepType = "teach" | "example" | "try" | "master";
 
@@ -19,7 +19,7 @@ export type Lesson = {
   grade: Grade;
   title: string;
   subtitle: string;
-  skill: "grammar" | "vocabulary" | "reading_comprehension" | "spelling";
+  skill: Skill;
   icon: string;
   estimatedMinutes: number;
   xp: number;

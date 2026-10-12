@@ -1,5 +1,5 @@
 import { getChallengeSession } from "@/lib/challenge";
-import { getEnglishPath } from "@/content/curriculum/english-path";
+import { getLearningPath } from "@/content/curriculum/learning-path";
 import { getStoryById } from "@/content";
 import { getActivityResults, recordActivityResult, awardXP, markStoryCompleted, updateLearnerPosition } from "@/lib/player";
 import { getNextLearningDecision } from "@/lib/curriculum-path";
@@ -16,7 +16,7 @@ function resultId(sessionId: string, suffix: string) { return `learning-session:
 
 /** The single client-side completion boundary for curriculum learning sessions. */
 export function completeLearningSession(request: CompletionRequest): CompletionResult {
-  const path = getEnglishPath(request.grade);
+  const path = getLearningPath(request.grade);
   const node = request.nodeId ? path.find((item) => item.id === request.nodeId) : undefined;
   const expectedRoute = request.story ? routeId(node?.route) : routeId(node?.route);
   const supportRoute = routeId(node?.supportRoute);

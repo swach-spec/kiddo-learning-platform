@@ -6,13 +6,13 @@ import { Player } from "@/lib/kiddo";
 import { Story } from "@/types/content";
 import { ActivityResult } from "@/types/activity";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
-import { getEnglishPath } from "@/content/curriculum/english-path";
+import { getLearningPath } from "@/content/curriculum/learning-path";
 import { getPathProgress, isNodeComplete } from "@/lib/curriculum-path";
 import { getAuthoritativeNextAction, startLearningNode } from "@/lib/guided-learning";
 
 type Props = { player: Player; stories: Story[]; activityResults: ActivityResult[] };
 
-function getNodeHref(node: ReturnType<typeof getEnglishPath>[number]) {
+function getNodeHref(node: ReturnType<typeof getLearningPath>[number]) {
   if (!node.route) return undefined;
   return `${node.route}${node.route.includes("?") ? "&" : "?"}node=${encodeURIComponent(node.id)}`;
 }
@@ -20,7 +20,7 @@ function getNodeHref(node: ReturnType<typeof getEnglishPath>[number]) {
 export function LearningJourney({ player, stories, activityResults }: Props) {
   const [showPath, setShowPath] = useState(false);
   const grade = Number(player.grade.replace(/\D/g, "")) || 2;
-  const path = getEnglishPath(grade);
+  const path = getLearningPath(grade);
   const progress = getPathProgress(activityResults, path);
   const decision = getAuthoritativeNextAction(player.id, grade);
   const gradeStories = stories.filter((story) => story.status === "ready" && story.grade === grade);
