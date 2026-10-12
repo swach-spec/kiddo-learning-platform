@@ -36,6 +36,7 @@ function placeOf(value: number, place: 0 | 1 | 2): Q {
     answer: PLACE[place],
     wrong: [...PLACE.filter((name) => name !== PLACE[place]), "thousands"],
     why: `In ${value}, the digit ${digit} is in the ${PLACE[place]} place.`,
+    working: { kind: "place-value", value, place },
   };
 }
 
@@ -48,6 +49,7 @@ function valueOf(value: number, place: 0 | 1 | 2): Q {
     answer: String(total),
     wrong: distinct(String(total), [String(digit), String(digit * 10), String(digit * 100), String(digit * 1000)]),
     why: `${digit} is in the ${PLACE[place]} place, so its value is ${digit} × ${10 ** place} = ${total}.`,
+    working: { kind: "place-value", value, place },
   };
 }
 
@@ -59,6 +61,7 @@ function build(hundreds: number, tens: number, ones: number): Q {
     answer: String(answer),
     wrong: distinct(String(answer), [`${hundreds}${ones}${tens}`, `${ones}${tens}${hundreds}`, String(hundreds + tens + ones), `${tens}${hundreds}${ones}`]),
     why: `${hundreds} hundreds = ${hundreds * 100}, ${tens} tens = ${tens * 10}, ${ones} ones = ${ones}. Together that makes ${answer}.`,
+    working: { kind: "place-value", value: answer },
   };
 }
 
@@ -141,9 +144,9 @@ export const g3MathPlaceValue: LearningUnit = {
     xp: 20,
     steps: [
       { id: "g3pv-teach", type: "teach", title: "Hundreds, tens and ones", body: "In a 3-digit number, each digit sits in a place. From the right, the places are ones, tens and hundreds." },
-      { id: "g3pv-example", type: "example", title: "Look at 352", body: "352 has 3 hundreds, 5 tens and 2 ones.", example: "3 hundreds = 300 • 5 tens = 50 • 2 ones = 2", explanation: "300 + 50 + 2 = 352. The place tells us what each digit is worth." },
+      { id: "g3pv-example", type: "example", title: "Look at 352", body: "352 has 3 hundreds, 5 tens and 2 ones.", example: "3 hundreds = 300 • 5 tens = 50 • 2 ones = 2", explanation: "300 + 50 + 2 = 352. The place tells us what each digit is worth.", working: { kind: "place-value", value: 352 } },
       { id: "g3pv-try", type: "try", title: "Try it", body: "In 461, which place is the 6 in?", options: ["tens", "ones", "hundreds"], correctOption: "tens", explanation: "4 is hundreds, 6 is tens and 1 is ones." },
-      { id: "g3pv-example-2", type: "example", title: "The value of a digit", body: "In 528, the 5 is in the hundreds place, so it is worth 500.", example: "5 → 500 • 2 → 20 • 8 → 8", explanation: "To find a digit's value, multiply it by its place: 5 × 100 = 500." },
+      { id: "g3pv-example-2", type: "example", title: "The value of a digit", body: "In 528, the 5 is in the hundreds place, so it is worth 500.", example: "5 → 500 • 2 → 20 • 8 → 8", explanation: "To find a digit's value, multiply it by its place: 5 × 100 = 500.", working: { kind: "place-value", value: 528, place: 2 } },
       { id: "g3pv-try-2", type: "try", title: "Try it", body: "What is the value of 7 in 274?", options: ["70", "7", "700"], correctOption: "70", explanation: "7 is in the tens place, so its value is 7 × 10 = 70." },
       { id: "g3pv-master", type: "master", title: "Ready to practise?", body: "You can find the place and the value of each digit. Let's practise together." },
     ],

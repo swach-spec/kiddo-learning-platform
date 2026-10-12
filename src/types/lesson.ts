@@ -1,4 +1,5 @@
 import { Grade, Skill } from "@/types/content";
+import { Working } from "@/types/working";
 
 export type LessonStepType = "teach" | "example" | "try" | "master";
 
@@ -11,6 +12,8 @@ export type LessonStep = {
   options?: string[];
   correctOption?: string;
   explanation?: string;
+  /** A step-by-step worked example drawn under this step (maths). */
+  working?: Working;
 };
 
 export type Lesson = {

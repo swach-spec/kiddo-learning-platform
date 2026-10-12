@@ -75,6 +75,7 @@ function op(a: string, b: string, sign: "+" | "−"): Q {
     answer,
     wrong: distinctByValue(answer, [topsAndBottoms, opposite, onePartMore, onePartLess]),
     why: `The LCM of ${x.d} and ${y.d} is ${denominator}. ${a} = ${xn}/${denominator} and ${b} = ${yn}/${denominator}. ${xn} ${sign} ${yn} = ${result.n}, so the answer is ${result.n}/${denominator} = ${answer}.`,
+    working: { kind: "fraction", op: sign, a, b },
   };
 }
 
@@ -152,7 +153,7 @@ export const g6MathFractions: LearningUnit = {
     xp: 20,
     steps: [
       { id: "g6fr-teach", type: "teach", title: "Same-sized pieces", body: "You can only add or subtract fractions when the pieces are the same size, which means the same denominator. Use the LCM (lowest common multiple) of the denominators." },
-      { id: "g6fr-example", type: "example", title: "Adding with the LCM", body: "1/4 + 1/6. The LCM of 4 and 6 is 12. 1/4 = 3/12 and 1/6 = 2/12. 3/12 + 2/12 = 5/12.", example: "1/4 + 1/6 = 5/12", explanation: "Change both fractions to twelfths, then add the tops." },
+      { id: "g6fr-example", type: "example", title: "Adding with the LCM", body: "1/4 + 1/6. The LCM of 4 and 6 is 12. 1/4 = 3/12 and 1/6 = 2/12. 3/12 + 2/12 = 5/12.", example: "1/4 + 1/6 = 5/12", explanation: "Change both fractions to twelfths, then add the tops.", working: { kind: "fraction", op: "+", a: "1/4", b: "1/6" } },
       { id: "g6fr-try", type: "try", title: "Try it", body: "What is 2/3 + 1/4?", options: ["11/12", "3/7", "3/12"], correctOption: "11/12", explanation: "LCM is 12: 8/12 + 3/12 = 11/12." },
       { id: "g6fr-example-2", type: "example", title: "Fractions as percentages", body: "To change a fraction to a percentage, multiply by 100%. 3/4 × 100% = 75%.", example: "3/4 = 75% • 1/5 = 20%", explanation: "Per cent means 'out of 100'." },
       { id: "g6fr-try-2", type: "try", title: "Try it", body: "What is the reciprocal of 3/8?", options: ["8/3", "3/8", "1/8"], correctOption: "8/3", explanation: "Turn it upside down: 8/3. Check: 3/8 × 8/3 = 1." },
@@ -189,12 +190,12 @@ export const g6MathFractions: LearningUnit = {
       fromPercent(60),
     ]),
     apply: bank(meta, "apply", [
-      { prompt: "Wanjiku ate 1/4 of a cake and her brother ate 1/3. What fraction did they eat altogether?", answer: "7/12", wrong: ["2/7", "1/12", "5/12"], why: "LCM of 4 and 3 is 12: 3/12 + 4/12 = 7/12." },
-      { prompt: "A tank was 5/6 full. 1/3 of the tank was used. What fraction is left?", answer: "1/2", wrong: ["4/3", "4/6", "1/6"], why: "1/3 = 2/6. 5/6 − 2/6 = 3/6 = 1/2." },
-      { prompt: "A farmer planted maize on 2 1/4 acres and beans on 1 2/3 acres. How many acres altogether?", answer: "3 11/12", wrong: ["3 3/7", "3 1/2", "4 1/12"], why: "2 1/4 = 2 3/12 and 1 2/3 = 1 8/12. Add: 3 11/12 acres." },
+      { prompt: "Wanjiku ate 1/4 of a cake and her brother ate 1/3. What fraction did they eat altogether?", answer: "7/12", wrong: ["2/7", "1/12", "5/12"], why: "LCM of 4 and 3 is 12: 3/12 + 4/12 = 7/12.", working: { kind: "fraction", op: "+", a: "1/4", b: "1/3" } },
+      { prompt: "A tank was 5/6 full. 1/3 of the tank was used. What fraction is left?", answer: "1/2", wrong: ["4/3", "4/6", "1/6"], why: "1/3 = 2/6. 5/6 − 2/6 = 3/6 = 1/2.", working: { kind: "fraction", op: "−", a: "5/6", b: "1/3" } },
+      { prompt: "A farmer planted maize on 2 1/4 acres and beans on 1 2/3 acres. How many acres altogether?", answer: "3 11/12", wrong: ["3 3/7", "3 1/2", "4 1/12"], why: "2 1/4 = 2 3/12 and 1 2/3 = 1 8/12. Add: 3 11/12 acres.", working: { kind: "fraction", op: "+", a: "2 1/4", b: "1 2/3" } },
       { prompt: "In a class, 3/5 of the pupils are girls. What percentage are girls?", answer: "60%", wrong: ["35%", "3.5%", "40%"], why: "3/5 × 100% = 60%." },
       { prompt: "A shop gives a discount of 20%. What fraction of the price is the discount?", answer: "1/5", wrong: ["1/20", "1/4", "4/5"], why: "20% = 20/100 = 1/5." },
-      { prompt: "Otieno ran 3 1/2 km and walked 1 3/4 km. How much further did he run than walk?", answer: "1 3/4 km", wrong: ["2 1/4 km", "1 1/4 km", "5 1/4 km"], why: "3 1/2 = 3 2/4. 3 2/4 − 1 3/4 = 1 3/4 km." },
+      { prompt: "Otieno ran 3 1/2 km and walked 1 3/4 km. How much further did he run than walk?", answer: "1 3/4 km", wrong: ["2 1/4 km", "1 1/4 km", "5 1/4 km"], why: "3 1/2 = 3 2/4. 3 2/4 − 1 3/4 = 1 3/4 km.", working: { kind: "fraction", op: "−", a: "3 1/2", b: "1 3/4" } },
     ]),
     mastery: bank(meta, "mastery", [
       op("5/8", "1/6", "+"),
@@ -206,7 +207,7 @@ export const g6MathFractions: LearningUnit = {
       toPercent("9/25"),
       fromPercent(75),
       { prompt: "Which is the largest: 2/3, 3/5 or 5/8?", answer: "2/3", wrong: ["3/5", "5/8"], why: "With the LCM 120: 2/3 = 80/120, 3/5 = 72/120, 5/8 = 75/120. So 2/3 is largest." },
-      { prompt: "A rope is 4 1/2 m long. 2 2/3 m is cut off. How much is left?", answer: "1 5/6 m", wrong: ["2 1/6 m", "1 1/6 m", "7 1/6 m"], why: "4 1/2 = 4 3/6 and 2 2/3 = 2 4/6. 4 3/6 − 2 4/6 = 1 5/6 m." },
+      { prompt: "A rope is 4 1/2 m long. 2 2/3 m is cut off. How much is left?", answer: "1 5/6 m", wrong: ["2 1/6 m", "1 1/6 m", "7 1/6 m"], why: "4 1/2 = 4 3/6 and 2 2/3 = 2 4/6. 4 3/6 − 2 4/6 = 1 5/6 m.", working: { kind: "fraction", op: "−", a: "4 1/2", b: "2 2/3" } },
     ]),
   },
 };

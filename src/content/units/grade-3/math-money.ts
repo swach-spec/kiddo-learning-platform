@@ -32,6 +32,7 @@ function balance(paid: number, prices: number[], itemNames: string): Q {
     answer: sh(change),
     wrong: distinct(sh(change), [sh(cost), sh(change + 10), sh(paid + cost), sh(change - 10)]),
     why: `First add the prices: ${sh(cost)}. Then subtract from what you paid: ${sh(paid)} − ${sh(cost)} = ${sh(change)}.`,
+    working: { kind: "column", op: "−", top: paid, bottom: cost, unit: "shillings" },
   };
 }
 
@@ -76,7 +77,7 @@ export const g3MathMoney: LearningUnit = {
       { id: "g3m-teach", type: "teach", title: "Kenyan money", body: "Kenyan coins include sh. 1, sh. 5, sh. 10 and sh. 20. Kenyan notes are sh. 50, sh. 100, sh. 200, sh. 500 and sh. 1,000." },
       { id: "g3m-example", type: "example", title: "Counting money", body: "A sh. 100 note, a sh. 50 note and two sh. 10 coins.", example: "100 + 50 + 10 + 10 = sh. 170", explanation: "Start with the biggest note, then add the smaller ones." },
       { id: "g3m-try", type: "try", title: "Try it", body: "How many sh. 50 notes make sh. 200?", options: ["4", "2", "5"], correctOption: "4", explanation: "50 + 50 + 50 + 50 = 200, so 4 notes." },
-      { id: "g3m-example-2", type: "example", title: "Balance", body: "You buy bread for sh. 65 and pay with a sh. 100 note.", example: "100 − 65 = sh. 35 balance", explanation: "The balance (change) is what you paid minus what it cost." },
+      { id: "g3m-example-2", type: "example", title: "Balance", body: "You buy bread for sh. 65 and pay with a sh. 100 note.", example: "100 − 65 = sh. 35 balance", explanation: "The balance (change) is what you paid minus what it cost.", working: { kind: "column", op: "−", top: 100, bottom: 65, unit: "shillings" } },
       { id: "g3m-try-2", type: "try", title: "Try it", body: "A pencil costs sh. 15. You pay sh. 50. What is your balance?", options: ["sh. 35", "sh. 65", "sh. 45"], correctOption: "sh. 35", explanation: "50 − 15 = 35." },
       { id: "g3m-master", type: "master", title: "Ready to practise?", body: "You can count money and work out a balance. Let's go to the market!" },
     ],
@@ -107,14 +108,14 @@ export const g3MathMoney: LearningUnit = {
       convert(200, 20),
       balance(500, [250, 125], "rice and sugar"),
       balance(1000, [450, 300], "shoes and a sweater"),
-      { prompt: "Achieng has sh. 350. She is given sh. 400 more. How much does she have now?", answer: "sh. 750", wrong: ["sh. 50", "sh. 700", "sh. 850"], why: "350 + 400 = 750." },
+      { prompt: "Achieng has sh. 350. She is given sh. 400 more. How much does she have now?", answer: "sh. 750", wrong: ["sh. 50", "sh. 700", "sh. 850"], why: "350 + 400 = 750.", working: { kind: "column", op: "+", top: 350, bottom: 400, unit: "shillings" } },
       { prompt: "Which set does NOT make sh. 500?", answer: "sh. 200 + sh. 200 + sh. 50", wrong: ["sh. 200 + sh. 200 + sh. 100", "sh. 100 × 5"], why: "200 + 200 + 50 = 450, not 500." },
     ]),
     apply: bank(meta, "apply", [
       balance(100, [30, 25, 20], "a pencil, a rubber and a sharpener"),
       balance(500, [180, 95, 60], "a bag of maize flour, milk and bread"),
       { prompt: "Mutua saves sh. 50 every week. How much has he saved after 4 weeks?", answer: "sh. 200", wrong: ["sh. 54", "sh. 150", "sh. 250"], why: "50 + 50 + 50 + 50 = 200." },
-      { prompt: "A book costs sh. 380. Njeri has sh. 250. How much more does she need?", answer: "sh. 130", wrong: ["sh. 630", "sh. 120", "sh. 230"], why: "380 − 250 = 130." },
+      { prompt: "A book costs sh. 380. Njeri has sh. 250. How much more does she need?", answer: "sh. 130", wrong: ["sh. 630", "sh. 120", "sh. 230"], why: "380 − 250 = 130.", working: { kind: "column", op: "−", top: 380, bottom: 250, unit: "shillings" } },
       { prompt: "Two pencils cost sh. 15 each. What do they cost together?", answer: "sh. 30", wrong: ["sh. 15", "sh. 25", "sh. 35"], why: "15 + 15 = 30." },
       { prompt: "Which is the best way to pay exactly sh. 260?", answer: "sh. 200 + sh. 50 + sh. 10", wrong: ["sh. 200 + sh. 100", "sh. 100 + sh. 50 + sh. 10"], why: "200 + 50 + 10 = 260. The other choices make 300 and 160." },
     ]),
@@ -126,7 +127,7 @@ export const g3MathMoney: LearningUnit = {
       convert(50, 10),
       balance(1000, [520, 175], "a school bag and a water bottle"),
       balance(200, [65, 70, 40], "tomatoes, onions and sukuma wiki"),
-      { prompt: "Wafula had sh. 900. He spent sh. 425. How much is left?", answer: "sh. 475", wrong: ["sh. 525", "sh. 1,325", "sh. 485"], why: "900 − 425 = 475." },
+      { prompt: "Wafula had sh. 900. He spent sh. 425. How much is left?", answer: "sh. 475", wrong: ["sh. 525", "sh. 1,325", "sh. 485"], why: "900 − 425 = 475.", working: { kind: "column", op: "−", top: 900, bottom: 425, unit: "shillings" } },
       { prompt: "A sh. 1,000 note is changed into sh. 200 notes. How many notes?", answer: "5", wrong: ["2", "10", "4"], why: "200 × 5 = 1,000." },
       { prompt: "Which is cheaper: 2 sodas at sh. 60 each, or 1 juice at sh. 110?", answer: "1 juice at sh. 110", wrong: ["2 sodas at sh. 60 each", "They cost the same"], why: "2 sodas cost 60 + 60 = sh. 120, which is more than sh. 110." },
     ]),

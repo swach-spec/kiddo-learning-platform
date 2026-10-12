@@ -70,6 +70,7 @@ function addOrSubtract(a: string, b: string, sign: "+" | "−"): Q {
     answer,
     wrong: distinct(answer, [misaligned, fromUnits(result + 100), fromUnits(result - 10), fromUnits(sign === "+" ? toUnits(a) - toUnits(b) : toUnits(a) + toUnits(b))].filter((value) => !value.startsWith("-"))),
     why: `Line up the decimal points, fill empty places with zeros, then ${sign === "+" ? "add" : "subtract"}: ${a} ${sign} ${b} = ${answer}.`,
+    working: { kind: "column", op: sign === "+" ? "+" : "−", top: Math.round(toUnits(a) / 10 ** (4 - width)), bottom: Math.round(toUnits(b) / 10 ** (4 - width)), decimals: width },
   };
 }
 
@@ -127,7 +128,7 @@ export const g6MathDecimals: LearningUnit = {
     steps: [
       { id: "g6dc-teach", type: "teach", title: "Places after the point", body: "After the decimal point come tenths, hundredths, thousandths and ten thousandths. In 3.4721, the 4 is tenths, 7 is hundredths, 2 is thousandths and 1 is ten thousandths." },
       { id: "g6dc-try", type: "try", title: "Try it", body: "In 0.5836, which place is the 3 in?", options: ["thousandths", "hundredths", "tenths"], correctOption: "thousandths", explanation: "5 tenths, 8 hundredths, 3 thousandths, 6 ten thousandths." },
-      { id: "g6dc-example", type: "example", title: "Line up the points", body: "4.25 + 1.375: write 4.250 + 1.375 with the points in line.", example: "4.250 + 1.375 = 5.625", explanation: "Always line up the decimal points, not the last digits." },
+      { id: "g6dc-example", type: "example", title: "Line up the points", body: "4.25 + 1.375: write 4.250 + 1.375 with the points in line.", example: "4.250 + 1.375 = 5.625", explanation: "Always line up the decimal points, not the last digits.", working: { kind: "column", op: "+", top: 4250, bottom: 1375, decimals: 3 } },
       { id: "g6dc-example-2", type: "example", title: "Decimals, fractions, percentages", body: "0.75 = 75/100 = 3/4 = 75%.", example: "0.75 → 3/4 → 75%", explanation: "To make a percentage, multiply the decimal by 100." },
       { id: "g6dc-try-2", type: "try", title: "Try it", body: "Round 2.4567 to 3 decimal places.", options: ["2.457", "2.456", "2.46"], correctOption: "2.457", explanation: "The 4th decimal digit is 7, so round the 6 up to 7: 2.457." },
       { id: "g6dc-master", type: "master", title: "Ready to practise?", body: "You can read, round, convert and add decimals. Let's practise." },
@@ -163,12 +164,12 @@ export const g6MathDecimals: LearningUnit = {
       toFraction("0.125", "1/8", ["1/125", "125/100", "1/4"]),
     ]),
     apply: bank(meta, "apply", [
-      { prompt: "Akinyi bought 2.5 kg of rice and 1.75 kg of sugar. What is the total mass?", answer: "4.25 kg", wrong: ["3.25 kg", "1.95 kg", "4.3 kg"], why: "Line up the points: 2.50 + 1.75 = 4.25 kg." },
-      { prompt: "A water bottle holds 1.5 litres. Juma drank 0.625 litres. How much is left?", answer: "0.875 litres", wrong: ["0.975 litres", "1.125 litres", "0.88 litres"], why: "1.500 − 0.625 = 0.875 litres." },
+      { prompt: "Akinyi bought 2.5 kg of rice and 1.75 kg of sugar. What is the total mass?", answer: "4.25 kg", wrong: ["3.25 kg", "1.95 kg", "4.3 kg"], why: "Line up the points: 2.50 + 1.75 = 4.25 kg.", working: { kind: "column", op: "+", top: 250, bottom: 175, decimals: 2, unit: "kg" } },
+      { prompt: "A water bottle holds 1.5 litres. Juma drank 0.625 litres. How much is left?", answer: "0.875 litres", wrong: ["0.975 litres", "1.125 litres", "0.88 litres"], why: "1.500 − 0.625 = 0.875 litres.", working: { kind: "column", op: "−", top: 1500, bottom: 625, decimals: 3, unit: "litres" } },
       { prompt: "A runner's time was 12.3486 seconds. What is it to 3 decimal places?", answer: "12.349 seconds", wrong: ["12.348 seconds", "12.35 seconds", "12.3486 seconds"], why: "The 4th decimal digit is 6, so round up: 12.349." },
       { prompt: "In a test, Chebet scored 0.85 of the marks. What percentage is that?", answer: "85%", wrong: ["8.5%", "0.85%", "850%"], why: "0.85 × 100 = 85%." },
       { prompt: "A shop gives 0.2 of the price as discount. As a fraction in simplest form, that is…", answer: "1/5", wrong: ["2/100", "1/2", "2/5"], why: "0.2 = 2/10 = 1/5." },
-      { prompt: "A field is 45.6 m long and 28.75 m wide. How much longer is the length than the width?", answer: "16.85 m", wrong: ["17.15 m", "16.95 m", "74.35 m"], why: "45.60 − 28.75 = 16.85 m." },
+      { prompt: "A field is 45.6 m long and 28.75 m wide. How much longer is the length than the width?", answer: "16.85 m", wrong: ["17.15 m", "16.95 m", "74.35 m"], why: "45.60 − 28.75 = 16.85 m.", working: { kind: "column", op: "−", top: 4560, bottom: 2875, decimals: 2, unit: "m" } },
     ]),
     mastery: bank(meta, "mastery", [
       placeOf("0.9072", 3),

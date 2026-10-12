@@ -4,6 +4,7 @@ import { getStoryById } from "@/content";
 import { getLearningPath } from "@/content/curriculum/learning-path";
 import { getChallengeSession } from "@/lib/challenge";
 import { UNIT_STAGES } from "@/types/learning-unit";
+import { stepsFor } from "@/lib/working";
 
 /**
  * Content checks every published unit must pass. They are the automatic half
@@ -76,6 +77,33 @@ describe("learning unit content", () => {
               const other = value(option.text);
               if (other !== null) expect(Math.abs(other - answer) > 1e-9, `${question.id}: "${option.text}" equals the answer`).toBe(true);
             }
+          }
+        }
+      });
+
+      it("shows working that arrives at exactly the correct answer", () => {
+        const value = (text: string): number | null => {
+          const cleaned = text.replace(/^sh\. /, "").replace(/,/g, "").replace(/ [a-zA-Z²]+$/, "").trim();
+          const mixed = /^(\d+) (\d+)\/(\d+)$/.exec(cleaned);
+          if (mixed) return Number(mixed[1]) + Number(mixed[2]) / Number(mixed[3]);
+          const fraction = /^(\d+)\/(\d+)$/.exec(cleaned);
+          if (fraction) return Number(fraction[1]) / Number(fraction[2]);
+          return /^\d+(\.\d+)?$/.test(cleaned) ? Number(cleaned) : null;
+        };
+        for (const stage of UNIT_STAGES) {
+          for (const question of unit.banks[stage].filter((item) => item.working)) {
+            const steps = stepsFor(question.working!);
+            const last = steps[steps.length - 1].text;
+            const correct = question.options.find((option) => option.id === question.correctOptionId)!.text;
+            const expected = value(correct);
+            if (question.working!.kind === "place-value") {
+              // Place value answers are a place name or a value; the chart must contain that digit's value.
+              continue;
+            }
+            expect(last.startsWith("Answer:"), `${question.id}: last step should start with "Answer:"`).toBe(true);
+            const shown = /^Answer: [^=]*= ([\d,./ ]+?)(?: remainder|\. |\.$|$)/.exec(last.trim())?.[1];
+            expect(shown, `${question.id}: no answer in "${last}"`).toBeDefined();
+            expect(value(shown!.trim()), `${question.id}: working says ${shown}, answer is ${correct}`).toBeCloseTo(expected!, 9);
           }
         }
       });

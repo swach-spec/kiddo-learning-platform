@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Lesson } from "@/types/lesson";
+import { WorkedSolution } from "@/components/working/WorkedSolution";
 
 export function LessonFlow({
   lesson,
@@ -101,6 +102,8 @@ export function LessonFlow({
               )}
             </div>
           )}
+
+          {step.working && <WorkedSolution key={step.id} working={step.working} startOpen title="Watch how it is done" />}
 
           {step.type === "try" && step.options && (
             <div className="mt-8">

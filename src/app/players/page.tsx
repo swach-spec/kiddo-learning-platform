@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { availablePictureAvatars } from "@/lib/media";
 import { Player } from "@/lib/kiddo";
 import { getPlayers, setCurrentPlayer } from "@/lib/player";
 import { getAccount, isLoggedIn, logout } from "@/lib/auth";
@@ -33,7 +34,7 @@ export default function PlayersPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("Grade 3");
-  const [avatar, setAvatar] = useState(AVATARS[0]);
+  const [avatar, setAvatar] = useState(() => availablePictureAvatars()[0] ?? AVATARS[0]);
   const [error, setError] = useState("");
   const [familyName, setFamilyName] = useState("");
 
@@ -129,7 +130,7 @@ export default function PlayersPage() {
             <div className="mt-8 w-full max-w-xl rounded-[2rem] border border-cyan-400/20 bg-cyan-400/5 p-6 shadow-2xl sm:p-8">
               <div className="flex items-start justify-between gap-4"><div><p className="text-sm font-bold uppercase tracking-widest text-cyan-400">New explorer</p><h3 className="mt-1 text-2xl font-black">Build your character</h3></div><button onClick={() => setShowCreate(false)} className="rounded-full bg-white/10 px-3 py-1 text-slate-400">✕</button></div>
               <label className="mt-6 block"><span className="mb-2 block text-sm font-bold text-slate-300">Explorer name</span><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3.5 outline-none focus:border-cyan-400" /></label>
-              <div className="mt-5"><span className="mb-2 block text-sm font-bold text-slate-300">Choose an avatar</span><div className="grid grid-cols-4 gap-3">{AVATARS.map((item) => <button key={item} onClick={() => setAvatar(item)} className={`rounded-2xl border p-3 text-3xl transition ${avatar === item ? "border-cyan-400 bg-cyan-400/15" : "border-white/10 bg-black/20 hover:bg-white/10"}`}>{item}</button>)}</div></div>
+              <div className="mt-5"><span className="mb-2 block text-sm font-bold text-slate-300">Choose an avatar</span><div className="grid grid-cols-4 gap-3">{[...availablePictureAvatars(), ...AVATARS].map((item) => <button key={item} onClick={() => setAvatar(item)} aria-label={item.startsWith("img:") ? `Avatar ${item.slice(4)}` : `Avatar ${item}`} className={`flex items-center justify-center rounded-2xl border p-2 text-3xl transition ${avatar === item ? "border-cyan-400 bg-cyan-400/15" : "border-white/10 bg-black/20 hover:bg-white/10"}`}>{item.startsWith("img:") ? <PlayerAvatar avatar={item} size="md" /> : item}</button>)}</div></div>
               <label className="mt-5 block"><span className="mb-2 block text-sm font-bold text-slate-300">School grade</span><select value={grade} onChange={(e) => setGrade(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3.5 outline-none focus:border-cyan-400">{GRADES.map((item) => <option key={item}>{item}</option>)}</select></label>
               {error && <p className="mt-4 rounded-2xl bg-red-400/10 px-4 py-3 text-sm font-semibold text-red-300">{error}</p>}
               <button onClick={addExplorer} className="mt-6 w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-5 py-4 font-black text-slate-950 shadow-xl transition hover:-translate-y-0.5">Start My Adventure 🚀</button>

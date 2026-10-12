@@ -5,11 +5,13 @@ import { g3EngIrregularPlurals } from "@/content/units/grade-3/english-irregular
 import { g3EngButBecause } from "@/content/units/grade-3/english-conjunctions";
 import { g3MathPlaceValue } from "@/content/units/grade-3/math-place-value";
 import { g3MathAddSubtract } from "@/content/units/grade-3/math-add-subtract";
+import { g3MathMultiplyDivide } from "@/content/units/grade-3/math-multiply-divide";
 import { g3MathMoney } from "@/content/units/grade-3/math-money";
 import { g6EngAdverbs } from "@/content/units/grade-6/english-adverbs";
 import { g6EngReportedSpeech } from "@/content/units/grade-6/english-reported-speech";
 import { g6EngLinkingWords } from "@/content/units/grade-6/english-linking-words";
 import { g6MathWholeNumbers } from "@/content/units/grade-6/math-whole-numbers";
+import { g6MathMultiplyDivide } from "@/content/units/grade-6/math-multiply-divide";
 import { g6MathFractions } from "@/content/units/grade-6/math-fractions";
 import { g6MathDecimals } from "@/content/units/grade-6/math-decimals";
 
@@ -25,12 +27,14 @@ export const LEARNING_UNITS: LearningUnit[] = [
   g3EngButBecause,
   g3MathPlaceValue,
   g3MathAddSubtract,
+  g3MathMultiplyDivide,
   g3MathMoney,
   // Grade 6 — pilot grade (English outcomes awaiting confirmation against the KICD design)
   g6EngAdverbs,
   g6EngReportedSpeech,
   g6EngLinkingWords,
   g6MathWholeNumbers,
+  g6MathMultiplyDivide,
   g6MathFractions,
   g6MathDecimals,
 ];

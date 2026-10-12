@@ -32,6 +32,7 @@ function add(a: number, b: number): Q {
     answer: String(answer),
     wrong: distinct(String(answer), [addNoCarry(a, b), answer + 10, answer - 10, answer + 100].map(String)),
     why: `Add the ones, then the tens, then the hundreds. Remember to carry when a column makes 10 or more. ${a} + ${b} = ${answer}.`,
+    working: { kind: "column", op: "+", top: a, bottom: b },
   };
 }
 
@@ -42,6 +43,7 @@ function sub(a: number, b: number): Q {
     answer: String(answer),
     wrong: distinct(String(answer), [subNoBorrow(a, b), answer + 10, answer - 10, answer + 100].map(String)),
     why: `Subtract the ones first. If the top digit is smaller, regroup one ten into ten ones. ${a} − ${b} = ${answer}.`,
+    working: { kind: "column", op: "−", top: a, bottom: b },
   };
 }
 
@@ -52,6 +54,7 @@ function missingAddend(a: number, total: number): Q {
     answer: String(answer),
     wrong: distinct(String(answer), [total + a, answer + 10, answer - 10, subNoBorrow(total, a)].map(String)),
     why: `To find the missing number, subtract: ${total} − ${a} = ${answer}.`,
+    working: { kind: "column", op: "−", top: total, bottom: a },
   };
 }
 
@@ -62,6 +65,7 @@ function wordAdd(prompt: string, a: number, b: number, unit: string): Q {
     answer: `${answer} ${unit}`,
     wrong: distinct(`${answer} ${unit}`, [addNoCarry(a, b), Math.abs(a - b), answer + 10].map((value) => `${value} ${unit}`)),
     why: `"Altogether" means add: ${a} + ${b} = ${answer}.`,
+    working: { kind: "column", op: "+", top: a, bottom: b, unit: unit },
   };
 }
 
@@ -72,6 +76,7 @@ function wordSub(prompt: string, a: number, b: number, unit: string): Q {
     answer: `${answer} ${unit}`,
     wrong: distinct(`${answer} ${unit}`, [subNoBorrow(a, b), a + b, answer + 10].map((value) => `${value} ${unit}`)),
     why: `To find what is left, subtract: ${a} − ${b} = ${answer}.`,
+    working: { kind: "column", op: "−", top: a, bottom: b, unit: unit },
   };
 }
 
@@ -103,9 +108,9 @@ export const g3MathAddSubtract: LearningUnit = {
     xp: 20,
     steps: [
       { id: "g3as-teach", type: "teach", title: "Start with the ones", body: "Line the numbers up: ones under ones, tens under tens, hundreds under hundreds. Always start with the ones column." },
-      { id: "g3as-example", type: "example", title: "Carrying", body: "247 + 35: 7 + 5 = 12. Write 2 in the ones and carry 1 ten. Then 4 + 3 + 1 = 8 tens. Then 2 hundreds.", example: "247 + 35 = 282", explanation: "When a column makes 10 or more, carry the ten to the next column." },
+      { id: "g3as-example", type: "example", title: "Carrying", body: "247 + 35: 7 + 5 = 12. Write 2 in the ones and carry 1 ten. Then 4 + 3 + 1 = 8 tens. Then 2 hundreds.", example: "247 + 35 = 282", explanation: "When a column makes 10 or more, carry the ten to the next column.", working: { kind: "column", op: "+", top: 247, bottom: 35 } },
       { id: "g3as-try", type: "try", title: "Try it", body: "What is 128 + 46?", options: ["174", "164", "184"], correctOption: "174", explanation: "8 + 6 = 14: write 4, carry 1. 2 + 4 + 1 = 7. 1 hundred. So 174." },
-      { id: "g3as-example-2", type: "example", title: "Regrouping", body: "352 − 27: you cannot take 7 from 2, so regroup one ten into ten ones. 12 − 7 = 5. Then 4 − 2 = 2 tens. Then 3 hundreds.", example: "352 − 27 = 325", explanation: "Regrouping means changing one ten into ten ones so you can subtract." },
+      { id: "g3as-example-2", type: "example", title: "Regrouping", body: "352 − 27: you cannot take 7 from 2, so regroup one ten into ten ones. 12 − 7 = 5. Then 4 − 2 = 2 tens. Then 3 hundreds.", example: "352 − 27 = 325", explanation: "Regrouping means changing one ten into ten ones so you can subtract.", working: { kind: "column", op: "−", top: 352, bottom: 27 } },
       { id: "g3as-try-2", type: "try", title: "Try it", body: "What is 64 − 19?", options: ["45", "55", "53"], correctOption: "45", explanation: "Regroup: 14 − 9 = 5. Then 5 − 1 = 4 tens. So 45." },
       { id: "g3as-master", type: "master", title: "Ready to practise?", body: "You can add with carrying and subtract with regrouping. Let's practise together." },
     ],

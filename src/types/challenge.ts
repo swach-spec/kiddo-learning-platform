@@ -1,3 +1,4 @@
+import { Working } from "@/types/working";
 import {
   Grade,
   PartOfSpeech,
@@ -32,4 +33,7 @@ export type Challenge = {
   subStrand?: string;
   concept?: string;
   activityType?: string;
-};
+
+  /** A worked solution shown after answering (maths). */
+  working?: Working;
+};

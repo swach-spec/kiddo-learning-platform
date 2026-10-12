@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import { storyCoverImage } from "@/lib/media";
 import { Story } from "@/types/content";
 import { Button } from "@/components/Button";
 
@@ -11,6 +13,7 @@ type StoryCardProps = {
 export function StoryCard({ story, unlocked }: StoryCardProps) {
   const comingSoon = story.status === "coming_soon";
   const playable = story.status === "ready" && unlocked;
+  const cover = storyCoverImage(story.id);
 
   return (
     <div
@@ -20,11 +23,15 @@ export function StoryCard({ story, unlocked }: StoryCardProps) {
     >
       {/* Illustration */}
       <div
-        className={`relative flex h-44 items-center justify-center bg-gradient-to-br ${story.gradient}`}
+        className={`relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br ${story.gradient}`}
       >
-        <div className="text-8xl transition duration-300 group-hover:scale-110">
-          {story.icon}
-        </div>
+        {cover ? (
+          <Image src={cover} alt="" fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover transition duration-300 group-hover:scale-105" />
+        ) : (
+          <div className="text-8xl transition duration-300 group-hover:scale-110">
+            {story.icon}
+          </div>
+        )}
 
         {comingSoon && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">

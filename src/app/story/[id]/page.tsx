@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { storySceneImage } from "@/lib/media";
 import { getStoryById } from "@/content";
 import { usePlayer } from "@/hooks/usePlayer";
 import { shuffleArray } from "@/lib/shuffle";
@@ -113,6 +115,7 @@ export default function StoryPage() {
   const curriculumNextHref = completion?.nextAction?.node.route ? `${completion.nextAction.node.route}?node=${encodeURIComponent(completion.nextAction.node.id)}` : null;
   const needsStoryPractice = completion?.nextAction?.route === "remediation";
   const readingFinished = scene >= story.scenes.length;
+  const sceneImage = !readingFinished ? storySceneImage(story.id, story.scenes[scene].id) : null;
   const currentQuestion = questions[question];
   const relatedChallenge = currentQuestion
     ? getChallengeForQuestion(currentQuestion)
@@ -244,9 +247,15 @@ export default function StoryPage() {
             {/* Story card */}
             <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/5">
 
-              <div className="flex h-64 items-center justify-center bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-600 text-8xl">
-                {story.scenes[scene].illustration}
-              </div>
+              {sceneImage ? (
+                <div className="relative aspect-[4/3] w-full bg-slate-900">
+                  <Image src={sceneImage} alt={story.scenes[scene].text.slice(0, 120)} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" priority={scene === 0} />
+                </div>
+              ) : (
+                <div className="flex h-64 items-center justify-center bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-600 text-8xl">
+                  {story.scenes[scene].illustration}
+                </div>
+              )}
 
               <div className="p-7 sm:p-10">
 

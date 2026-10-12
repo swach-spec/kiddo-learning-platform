@@ -24,6 +24,7 @@ function placeOf(value: number, place: number): Q {
     answer: PLACES[place],
     wrong: distinct(PLACES[place], [PLACES[place + 1], PLACES[place - 1], PLACES[place + 2], PLACES[place - 2]].filter(Boolean)),
     why: `Counting places from the right (ones, tens, hundreds, thousands, …), the ${digit} is in the ${PLACES[place]} place.`,
+    working: { kind: "place-value", value, place },
   };
 }
 
@@ -35,6 +36,7 @@ function totalValue(value: number, place: number): Q {
     answer: fmt(total),
     wrong: distinct(fmt(total), [fmt(total * 10), fmt(total / 10), String(digit), fmt(total * 100)]),
     why: `${digit} is in the ${PLACES[place]} place, so its total value is ${digit} × ${fmt(10 ** place)} = ${fmt(total)}.`,
+    working: { kind: "place-value", value, place },
   };
 }
 
@@ -57,6 +59,7 @@ function square(n: number): Q {
     answer: fmt(answer),
     wrong: distinct(fmt(answer), [fmt(n * 2), fmt((n + 1) * (n + 1)), fmt(n * 10), fmt((n - 1) * (n - 1))]),
     why: `${n}² means ${n} × ${n} = ${fmt(answer)}.`,
+    ...(n >= 10 ? { working: { kind: "long-multiplication" as const, a: n, b: n } } : {}),
   };
 }
 
@@ -111,7 +114,7 @@ export const g6MathWholeNumbers: LearningUnit = {
       { id: "g6wn-teach", type: "teach", title: "Place value to millions", body: "Digits are grouped in threes from the right: ones, thousands, millions. In 4,256,310 the 4 is in the millions place, so its total value is 4,000,000." },
       { id: "g6wn-try", type: "try", title: "Try it", body: "What is the total value of 7 in 3,725,104?", options: ["700,000", "70,000", "7,000,000"], correctOption: "700,000", explanation: "7 is in the hundred thousands place: 7 × 100,000 = 700,000." },
       { id: "g6wn-example", type: "example", title: "Rounding to the nearest thousand", body: "Round 46,728 to the nearest thousand. Look at the hundreds digit: 7 is 5 or more, so round up.", example: "46,728 → 47,000", explanation: "If the hundreds digit is 5 or more, round up; otherwise round down." },
-      { id: "g6wn-example-2", type: "example", title: "Squares and square roots", body: "12² = 12 × 12 = 144. The square root of 144 is 12, because 12 × 12 = 144.", example: "12² = 144 • √144 = 12", explanation: "Squaring and finding the square root undo each other." },
+      { id: "g6wn-example-2", type: "example", title: "Squares and square roots", body: "12² = 12 × 12 = 144. The square root of 144 is 12, because 12 × 12 = 144.", example: "12² = 144 • √144 = 12", explanation: "Squaring and finding the square root undo each other.", working: { kind: "long-multiplication", a: 12, b: 12 } },
       { id: "g6wn-try-2", type: "try", title: "Try it", body: "What is √2,500?", options: ["50", "250", "500"], correctOption: "50", explanation: "50 × 50 = 2,500." },
       { id: "g6wn-master", type: "master", title: "Ready to practise?", body: "You can use place value, round numbers, and work with squares and square roots. Let's practise." },
     ],
